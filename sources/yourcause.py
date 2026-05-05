@@ -98,7 +98,19 @@ class YourCauseSource(BaseSource):
                 "City": "" if is_anonymous else (str(row.get("Donor City", "")) if pd.notna(row.get("Donor City")) else ""),
                 "State": "" if is_anonymous else (str(row.get("Donor State", "")) if pd.notna(row.get("Donor State")) else ""),
                 "ZIP": "" if is_anonymous else (str(row.get("Donor Postal Code", "")) if pd.notna(row.get("Donor Postal Code")) else ""),
-                "Country": "" if is_anonymous else country,
+                "Country": (
+                    "" if is_anonymous else (
+                        ("United States" if str(row.get("Country", "")).upper() == "US" else str(row.get("Country", "")))
+                        if str(row.get("Country", "")).strip() not in ["", "Not shared by donor", "nan"] else (
+                            "United States" if any([
+                                str(row.get("Address", "")).strip() not in ["", "Not shared by donor", "nan"],
+                                str(row.get("City", "")).strip() not in ["", "Not shared by donor", "nan"],
+                                str(row.get("State/Province", "")).strip() not in ["", "Not shared by donor", "nan"],
+                                str(row.get("Postal Code", "")).strip() not in ["", "Not shared by donor", "nan"],
+                            ]) else ""
+                        )
+                    )
+                )
                 "Primary Phone": "",
                 "Email": "" if is_anonymous else (str(row.get("Donor Email", "")) if pd.notna(row.get("Donor Email")) else ""),
             }
