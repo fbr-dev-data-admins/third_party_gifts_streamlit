@@ -7,6 +7,7 @@ from typing import Optional
 
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 
 from re_skyapi import RESkyAPI
 from sources import SOURCE_REGISTRY
@@ -130,6 +131,15 @@ def detect_source(raw_bytes: bytes) -> Optional[str]:
 
 
 def render_sidebar():
+    components.html("""
+    <script>
+    window.parent.document.addEventListener('keydown', function(e) {
+        if ((e.key === 'c' || e.key === 'C') && (e.ctrlKey || e.metaKey)) {
+            e.stopPropagation();
+        }
+    }, true);
+    </script>
+    """, height=0)
     """Render the sidebar with RE API auth and config status."""
     with st.sidebar:
         st.header("RE NXT Sky API")
@@ -171,16 +181,6 @@ def render_sidebar():
 
             except Exception as e:
                 st.error(f"RE API not configured: {e}")
-    
-    st.html("""
-    <script>
-    document.addEventListener('keydown', function(e) {
-        if ((e.key === 'c' || e.key === 'C') && (e.ctrlKey || e.metaKey)) {
-            e.stopPropagation();
-        }
-    }, true);
-    </script>
-    """)
 
 def render_file_upload():
     """Render file upload section."""
