@@ -100,7 +100,7 @@ class FidelitySource(BaseSource):
                 "City": "",
                 "State": "",
                 "ZIP": "",
-                "Country": "United States",
+                "Country": "",
                 "Primary Phone": "",
                 "Email": email,
             }
