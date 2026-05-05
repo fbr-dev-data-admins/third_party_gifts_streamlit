@@ -171,7 +171,16 @@ def render_sidebar():
 
             except Exception as e:
                 st.error(f"RE API not configured: {e}")
-
+    
+    st.html("""
+    <script>
+    document.addEventListener('keydown', function(e) {
+        if ((e.key === 'c' || e.key === 'C') && (e.ctrlKey || e.metaKey)) {
+            e.stopPropagation();
+        }
+    }, true);
+    </script>
+    """)
 
 def render_file_upload():
     """Render file upload section."""
