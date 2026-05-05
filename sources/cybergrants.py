@@ -90,7 +90,7 @@ class CyberGrantsSource(BaseSource):
                             ]) else ""
                         )
                     )
-                )
+                ),
                 "Primary Phone": str(row.get("Donor Telephone", "")) if pd.notna(row.get("Donor Telephone")) else "",
                 "Email": str(row.get("Donor Email Address", "")) if pd.notna(row.get("Donor Email Address")) else "",
             }
