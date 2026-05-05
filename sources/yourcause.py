@@ -110,7 +110,7 @@ class YourCauseSource(BaseSource):
                             ]) else ""
                         )
                     )
-                )
+                ),
                 "Primary Phone": "",
                 "Email": "" if is_anonymous else (str(row.get("Donor Email", "")) if pd.notna(row.get("Donor Email")) else ""),
             }
