@@ -172,17 +172,6 @@ def render_sidebar():
             except Exception as e:
                 st.error(f"RE API not configured: {e}")
 
-        st.divider()
-
-        st.header("Configuration")
-        source_label = "GitHub" if st.session_state.use_github else "Local"
-        st.info(f"Config source: {source_label}")
-
-        if st.button("Reload Configs"):
-            load_configs()
-            st.session_state.cache_df = load_cache(st.session_state.use_github)
-            st.success("Configs reloaded")
-
 
 def render_file_upload():
     """Render file upload section."""
@@ -739,9 +728,8 @@ def main():
 
     init_session_state()
 
-    if not st.session_state.company_config:
-        load_configs()
-        st.session_state.cache_df = load_cache(st.session_state.use_github)
+    load_configs()
+    st.session_state.cache_df = load_cache(st.session_state.use_github)
 
     if st.session_state.re_tokens and st.session_state.re_api:
         st.session_state.re_api.set_tokens(**st.session_state.re_tokens)
