@@ -1,0 +1,136 @@
+"""Abstract base class for source transformers."""
+
+from abc import ABC, abstractmethod
+from typing import Optional
+import pandas as pd
+
+
+class BaseSource(ABC):
+    """Abstract base class for workplace giving platform source transformers."""
+
+    name: str = "Base"
+
+    @abstractmethod
+    def detect(self, df_raw: pd.DataFrame, raw_bytes: bytes) -> bool:
+        """
+        Detect if this source matches the uploaded file.
+
+        Args:
+            df_raw: DataFrame read without skipping rows
+            raw_bytes: Raw file bytes for text inspection
+
+        Returns:
+            True if this source matches the file
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def read_file(self, raw_bytes: bytes) -> pd.DataFrame:
+        """
+        Read the file with source-specific parsing (skip rows, etc.).
+
+        Args:
+            raw_bytes: Raw file bytes
+
+        Returns:
+            DataFrame with proper headers
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def transform_part1(
+        self,
+        df: pd.DataFrame,
+        company_config: dict,
+        entity_config: dict
+    ) -> tuple[pd.DataFrame, pd.DataFrame, set, set]:
+        """
+        Transform source data for Part 1 (Individuals) import.
+
+        Args:
+            df: Source DataFrame
+            company_config: Company name -> RE Import ID mapping
+            entity_config: Entity name -> RE Import ID mapping
+
+        Returns:
+            Tuple of:
+                - unified_individuals_df: DataFrame for unified import
+                - grants_df: DataFrame for grants file (raw source rows)
+                - benevity_rows: Set of row indices from Benevity with amount >= 1000
+                - benevity_reason_rows: Set of row indices with non-standard Reason
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def transform_part2(
+        self,
+        df: pd.DataFrame,
+        company_config: dict,
+        entity_config: dict,
+        cache_df: pd.DataFrame
+    ) -> pd.DataFrame:
+        """
+        Transform source data for Part 2 (Companies) import.
+
+        Args:
+            df: Source DataFrame
+            company_config: Company name -> RE Import ID mapping
+            entity_config: Entity name -> RE Import ID mapping
+            cache_df: Donor cache DataFrame for matching
+
+        Returns:
+            unified_companies_df: DataFrame for unified companies import
+        """
+        raise NotImplementedError
+
+    def get_companies(self, df: pd.DataFrame) -> set:
+        """
+        Get all unique company names from the source data.
+
+        Override in subclasses to specify the correct column name.
+
+        Args:
+            df: Source DataFrame
+
+        Returns:
+            Set of company names
+        """
+        return set()
+
+    def _check_branch(self, text: Optional[str]) -> str:
+        """
+        Check if text contains branch indicators.
+
+        Args:
+            text: Text to check (gift reference, designation, etc.)
+
+        Returns:
+            'WSlope' if branch indicator found, 'Main' otherwise
+        """
+        if not text or pd.isna(text):
+            return "Main"
+
+        text_lower = str(text).lower()
+        if any(term in text_lower for term in ["wslope", "western slope", "western slopes"]):
+            return "WSlope"
+        return "Main"
+
+    def _build_gift_reference(self, *parts: Optional[str], company: str = "") -> str:
+        """
+        Build gift reference by joining non-empty parts with ' ; '.
+
+        Always appends "{Company} workplace giving" at the end.
+
+        Args:
+            *parts: Variable number of reference parts
+            company: Company name to append
+
+        Returns:
+            Formatted gift reference string
+        """
+        valid_parts = [str(p).strip() for p in parts if p and pd.notna(p) and str(p).strip()]
+
+        if company:
+            valid_parts.append(f"{company} workplace giving")
+
+        return " ; ".join(valid_parts)
