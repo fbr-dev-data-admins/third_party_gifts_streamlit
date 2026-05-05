@@ -79,7 +79,7 @@ class CyberGrantsSource(BaseSource):
                 "State": str(row.get("Donor State", "")) if pd.notna(row.get("Donor State")) else "",
                 "ZIP": str(row.get("Donor ZIP/Postal Code", "")) if pd.notna(row.get("Donor ZIP/Postal Code")) else "",
                 "Country": (
-                    "" if is_anonymous else (
+                    (
                         ("United States" if str(row.get("Country", "")).upper() == "US" else str(row.get("Country", "")))
                         if str(row.get("Country", "")).strip() not in ["", "Not shared by donor", "nan"] else (
                             "United States" if any([
@@ -90,7 +90,8 @@ class CyberGrantsSource(BaseSource):
                             ]) else ""
                         )
                     )
-                ),
+                )
+
                 "Primary Phone": str(row.get("Donor Telephone", "")) if pd.notna(row.get("Donor Telephone")) else "",
                 "Email": str(row.get("Donor Email Address", "")) if pd.notna(row.get("Donor Email Address")) else "",
             }
