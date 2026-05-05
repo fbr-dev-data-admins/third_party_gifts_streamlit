@@ -122,7 +122,8 @@ def detect_source(raw_bytes: bytes) -> Optional[str]:
     except Exception:
         df_raw = pd.DataFrame()
 
-    for source_name, source_class in SOURCE_REGISTRY.items():
+    for source_name, source_class in SOURCE_REGISTRY.
+    items():
         source = source_class()
         if source.detect(df_raw, raw_bytes):
             return source_name
@@ -496,7 +497,7 @@ def render_part1():
 
         st.divider()
 
-        if st.checkbox("I have committed the Part 1 import in Raiser's Edge"):
+        if st.checkbox("I have committed the Part 1 batch in Raiser's Edge"):
             st.session_state.part1_complete = True
             st.success("Part 1 marked as complete. You can now proceed to Part 2.")
 
