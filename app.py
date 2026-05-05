@@ -24,7 +24,7 @@ from utils.date_utils import format_gl_post_date
 
 st.set_page_config(
     page_title="Third Party Unified Gift Processor",
-    page_icon="🎁",
+    page_icon="👥",
     layout="wide"
 )
 
@@ -302,7 +302,7 @@ def render_company_validation():
     with st.form("company_form"):
         for company in missing:
             st.session_state.missing_companies[company] = st.text_input(
-                f"RE Import ID for '{company}':",
+                f"RE Constituent ID for '{company}':",
                 key=f"company_id_{company}"
             )
 
@@ -312,7 +312,7 @@ def render_company_validation():
             )
 
             if not all_filled:
-                st.error("Please fill in all company Import IDs")
+                st.error("Please fill in all company Constituent IDs")
                 return False
 
             for company, import_id in st.session_state.missing_companies.items():
