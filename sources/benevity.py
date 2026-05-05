@@ -23,7 +23,12 @@ class BenevitySource(BaseSource):
 
     def read_file(self, raw_bytes: bytes) -> pd.DataFrame:
         """Read Benevity file with data headers on row index 11."""
-        return pd.read_csv(io.BytesIO(raw_bytes), skiprows=11)
+        df = pd.read_csv(io.BytesIO(raw_bytes), skiprows=11)
+        first_col = df.columns[0]
+        totals_idx = df.index[df[first_col].astype(str).str.strip() == "Totals"]
+        if not totals_idx.empty:
+            df = df.iloc[:totals_idx[0]]
+        return df
 
     def get_companies(self, df: pd.DataFrame) -> set:
         """Get unique company names from Company column."""
