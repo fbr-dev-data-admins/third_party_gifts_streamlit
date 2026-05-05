@@ -156,8 +156,8 @@ def render_sidebar():
 
                 if st.button("Get Authorization URL"):
                     auth_url = st.session_state.re_api.get_authorization_url()
-                    st.code(auth_url, language=None)
-                    st.info("Visit this URL, authorize, then paste the code below.")
+                    st.link_button("Click to Authorize with Raiser's Edge", auth_url)
+                    st.info("After authorizing, paste the code below.")
 
                 auth_code = st.text_input("Authorization Code:")
                 if st.button("Submit Code") and auth_code:
