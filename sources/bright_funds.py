@@ -94,7 +94,7 @@ class BrightFundsSource(BaseSource):
                 "City": "",
                 "State": "",
                 "ZIP": "",
-                "Country": "United States",
+                "Country": "",
                 "Primary Phone": "",
                 "Email": "" if is_anonymous else email,
             }
