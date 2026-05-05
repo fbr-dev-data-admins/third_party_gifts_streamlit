@@ -106,7 +106,12 @@ class BenevitySource(BaseSource):
                 "City": "" if is_anonymous else (str(row.get("City", "")) if pd.notna(row.get("City")) and str(row.get("City")) != "Not shared by donor" else ""),
                 "State": "" if is_anonymous else (str(row.get("State/Province", "")) if pd.notna(row.get("State/Province")) and str(row.get("State/Province")) != "Not shared by donor" else ""),
                 "ZIP": "" if is_anonymous else (str(row.get("Postal Code", "")) if pd.notna(row.get("Postal Code")) and str(row.get("Postal Code")) != "Not shared by donor" else ""),
-                "Country": "" if is_anonymous else "United States",
+                "Country": "" if is_anonymous else ("United States" if any([
+                    str(row.get("Address", "")) not in ["", "Not shared by donor", "nan"],
+                    str(row.get("City", "")) not in ["", "Not shared by donor", "nan"],
+                    str(row.get("State/Province", "")) not in ["", "Not shared by donor", "nan"],
+                    str(row.get("Postal Code", "")) not in ["", "Not shared by donor", "nan"],
+                ]) else ""),
                 "Primary Phone": "",
                 "Email": "" if is_anonymous else (str(row.get("Email", "")) if pd.notna(row.get("Email")) and str(row.get("Email")) != "Not shared by donor" else ""),
             }
