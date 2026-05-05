@@ -122,8 +122,7 @@ def detect_source(raw_bytes: bytes) -> Optional[str]:
     except Exception:
         df_raw = pd.DataFrame()
 
-    for source_name, source_class in SOURCE_REGISTRY.
-    items():
+    for source_name, source_class in SOURCE_REGISTRY.items():
         source = source_class()
         if source.detect(df_raw, raw_bytes):
             return source_name
@@ -132,15 +131,6 @@ def detect_source(raw_bytes: bytes) -> Optional[str]:
 
 
 def render_sidebar():
-    components.html("""
-    <script>
-    window.parent.document.addEventListener('keydown', function(e) {
-        if ((e.key === 'c' || e.key === 'C') && (e.ctrlKey || e.metaKey)) {
-            e.stopPropagation();
-        }
-    }, true);
-    </script>
-    """, height=0)
     """Render the sidebar with RE API auth and config status."""
     with st.sidebar:
         st.header("RE NXT Sky API")
@@ -745,6 +735,16 @@ def main():
         st.session_state.re_api.set_tokens(**st.session_state.re_tokens)
 
     render_sidebar()
+
+    components.html("""
+    <script>
+    window.parent.document.addEventListener('keydown', function(e) {
+        if ((e.key === 'c' || e.key === 'C') && (e.ctrlKey || e.metaKey)) {
+            e.stopPropagation();
+        }
+    }, true);
+    </script>
+    """, height=0)
 
     tab1, tab2 = st.tabs(["Part 1 - Individuals", "Part 2 - Companies"])
 
