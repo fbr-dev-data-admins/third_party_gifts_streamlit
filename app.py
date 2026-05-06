@@ -301,16 +301,17 @@ def render_company_validation():
 
     with st.form("company_form"):
         for company in missing:
-            col_label, col_copy = st.columns([6, 1])
-            with col_label:
-                st.session_state.missing_companies[company] = st.text_input(
-                    f"RE Constituent ID for '{company}':",
-                    key=f"company_id_{company}"
-                )
+            col_name, col_copy = st.columns([4, 1])
+            with col_name:
+                st.markdown(f"**RE Constituent ID for:**")
             with col_copy:
-                st.markdown("<div style='padding-top: 28px'>", unsafe_allow_html=True)
                 st.code(company, language=None)
-                st.markdown("</div>", unsafe_allow_html=True)
+            st.session_state.missing_companies[company] = st.text_input(
+                "Constituent ID:",
+                key=f"company_id_{company}",
+                label_visibility="collapsed"
+            )
+            st.divider()
 
         if st.form_submit_button("Save Company Mappings"):
             all_filled = all(
