@@ -68,6 +68,7 @@ def init_session_state():
         "part2_query_results": None,
         "part2_cache_matches": {},
         "part2_result": None,
+        "part2_stale_cache_rows": set(),
         "missing_companies": {},
         "use_github": True,
     }
@@ -669,6 +670,8 @@ def render_part2():
     if st.button("Process Part 2 - Companies", type="primary"):
         with st.spinner("Processing..."):
             all_company_rows = []
+            all_stale_cache_rows = set()
+            row_offset = 0
 
             for file_hash, source_name in st.session_state.file_sources.items():
                 if source_name not in SOURCE_REGISTRY:
@@ -679,7 +682,7 @@ def render_part2():
                 source = source_class()
 
                 df = source.read_file(file_info["content"])
-                company_df = source.transform_part2(
+                company_df, stale_rows = source.transform_part2(
                     df,
                     st.session_state.company_config,
                     st.session_state.entity_config,
@@ -687,6 +690,9 @@ def render_part2():
                 )
 
                 if not company_df.empty:
+                    adjusted_stale = {r + row_offset for r in stale_rows}
+                    all_stale_cache_rows.update(adjusted_stale)
+                    row_offset += len(company_df)
                     all_company_rows.append(company_df)
 
             if all_company_rows:
@@ -695,6 +701,7 @@ def render_part2():
                 combined = pd.DataFrame()
 
             st.session_state.part2_result = combined
+            st.session_state.part2_stale_cache_rows = all_stale_cache_rows
             st.success(f"Processed {len(combined)} company gift rows")
 
     if st.session_state.part2_result is not None and not st.session_state.part2_result.empty:
@@ -705,7 +712,10 @@ def render_part2():
         today_str = date.today().strftime("%Y%m%d")
         filename = f"company_gift_import_{today_str}.xlsx"
 
-        excel_bytes = create_import_excel(st.session_state.part2_result)
+        excel_bytes = create_import_excel(
+            st.session_state.part2_result,
+            stale_cache_rows=st.session_state.part2_stale_cache_rows
+        )
 
         if st.download_button(
             "Download Company Import File",
