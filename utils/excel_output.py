@@ -12,6 +12,7 @@ from openpyxl.formatting.rule import FormulaRule
 
 HEADER_FILL = PatternFill(start_color="D9E1F2", end_color="D9E1F2", fill_type="solid")
 YELLOW_FILL = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
+PALE_YELLOW_FILL = PatternFill(start_color="FFFFE0", end_color="FFFFE0", fill_type="solid")
 ORANGE_FILL = PatternFill(start_color="F2AC57", end_color="F2AC57", fill_type="solid")
 
 
@@ -52,6 +53,9 @@ def create_import_excel(
     zip_col_idx = columns.index("ZIP") + 1 if "ZIP" in columns else None
     amount_col_idx = columns.index("Gift Amount") + 1 if "Gift Amount" in columns else None
     ref_col_idx = columns.index("Gift Reference") + 1 if "Gift Reference" in columns else None
+    first_name_col_idx = columns.index("First Name") + 1 if "First Name" in columns else None
+    last_name_col_idx = columns.index("Last Name") + 1 if "Last Name" in columns else None
+    constituent_id_col_idx = columns.index("Constituent ID") + 1 if "Constituent ID" in columns else None
 
     if state_col_idx and zip_col_idx:
         state_col = get_column_letter(state_col_idx)
@@ -79,6 +83,25 @@ def create_import_excel(
         excel_row = row_idx + 2
         if ref_col_idx:
             ws.cell(row=excel_row, column=ref_col_idx).fill = YELLOW_FILL
+
+    for row_idx in range(len(df)):
+        excel_row = row_idx + 2
+        constituent_id = df.iloc[row_idx]["Constituent ID"] if "Constituent ID" in df.columns else ""
+        is_non_anonymous = pd.notna(constituent_id) and str(constituent_id).strip() != ""
+
+        if first_name_col_idx:
+            first_name = df.iloc[row_idx]["First Name"] if "First Name" in df.columns else ""
+            first_name_blank = pd.isna(first_name) or str(first_name).strip() == ""
+            first_name_has_space = pd.notna(first_name) and " " in str(first_name)
+            if first_name_has_space or (is_non_anonymous and first_name_blank):
+                ws.cell(row=excel_row, column=first_name_col_idx).fill = PALE_YELLOW_FILL
+
+        if last_name_col_idx:
+            last_name = df.iloc[row_idx]["Last Name"] if "Last Name" in df.columns else ""
+            last_name_blank = pd.isna(last_name) or str(last_name).strip() == ""
+            last_name_has_space = pd.notna(last_name) and " " in str(last_name)
+            if last_name_has_space or (is_non_anonymous and last_name_blank):
+                ws.cell(row=excel_row, column=last_name_col_idx).fill = PALE_YELLOW_FILL
 
     for col_idx, column in enumerate(columns, 1):
         max_length = len(str(column))
