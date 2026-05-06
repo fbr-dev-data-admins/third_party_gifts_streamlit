@@ -68,7 +68,7 @@ class BaseSource(ABC):
         company_config: dict,
         entity_config: dict,
         cache_df: pd.DataFrame
-    ) -> pd.DataFrame:
+    ) -> tuple[pd.DataFrame, set]:
         """
         Transform source data for Part 2 (Companies) import.
 
@@ -79,7 +79,10 @@ class BaseSource(ABC):
             cache_df: Donor cache DataFrame for matching
 
         Returns:
-            unified_companies_df: DataFrame for unified companies import
+            Tuple of:
+                - unified_companies_df: DataFrame for unified companies import
+                - stale_cache_rows: Set of row indices (0-based) where the matched
+                  cache entry was not added today
         """
         raise NotImplementedError
 
