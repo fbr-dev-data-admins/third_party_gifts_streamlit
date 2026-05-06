@@ -299,13 +299,17 @@ def render_company_validation():
 
     st.session_state.missing_companies = missing
 
+    st.markdown("""
+    <style>
+    .stCode { margin-bottom: 0rem; margin-top: 0rem; }
+    .stCode code { padding: 2px 8px !important; }
+    </style>
+    """, unsafe_allow_html=True)
+
     with st.form("company_form"):
         for company in missing:
-            col_name, col_copy = st.columns([4, 1])
-            with col_name:
-                st.markdown(f"**RE Constituent ID for:**")
-            with col_copy:
-                st.code(company, language=None)
+            st.markdown("RE Constituent ID for:")
+            st.code(company, language=None)
             st.session_state.missing_companies[company] = st.text_input(
                 "Constituent ID:",
                 key=f"company_id_{company}",
