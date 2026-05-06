@@ -156,7 +156,7 @@ def render_sidebar():
                         client_id, client_secret, redirect_uri, subscription_key
                     )
 
-                if st.button("Get Authorization URL"):
+                if st.button("Initiate Authorization"):
                     auth_url = st.session_state.re_api.get_authorization_url()
                     st.link_button("Click to Authorize with Raiser's Edge", auth_url)
                     st.info("After authorizing, paste the code below.")
