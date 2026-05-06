@@ -1,6 +1,7 @@
 """Fidelity Marketplace Giving source transformer."""
 
 import io
+from datetime import date
 import pandas as pd
 
 from .base import BaseSource
@@ -118,10 +119,12 @@ class FidelitySource(BaseSource):
         company_config: dict,
         entity_config: dict,
         cache_df: pd.DataFrame
-    ) -> pd.DataFrame:
+    ) -> tuple[pd.DataFrame, set]:
         """Transform Fidelity data for Part 2 (Company/Matching Gift donations)."""
         gl_post_date = format_gl_post_date()
+        today_str = date.today().strftime("%m/%d/%Y")
         company_rows = []
+        stale_cache_rows = set()
 
         donation_type_col = "Donation Type (metadata)"
 
@@ -160,6 +163,9 @@ class FidelitySource(BaseSource):
                     if cache_first == first.lower() and cache_last == last.lower():
                         soft_credit_id = str(cache_row.get("Constituent ID", ""))
                         branch = str(cache_row.get("Branch", "Main")) or "Main"
+                        cache_added = str(cache_row.get("Date Added to Cache", ""))
+                        if cache_added != today_str:
+                            stale_cache_rows.add(len(company_rows))
                         break
 
             gift_reference = self._build_gift_reference(company=company_name)
@@ -181,4 +187,4 @@ class FidelitySource(BaseSource):
 
             company_rows.append(output_row)
 
-        return pd.DataFrame(company_rows)
+        return pd.DataFrame(company_rows), stale_cache_rows
