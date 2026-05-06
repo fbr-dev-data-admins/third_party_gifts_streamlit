@@ -7,7 +7,6 @@ from typing import Optional
 
 import pandas as pd
 import streamlit as st
-import streamlit.components.v1 as components
 
 from re_skyapi import RESkyAPI
 from sources import SOURCE_REGISTRY
@@ -302,10 +301,16 @@ def render_company_validation():
 
     with st.form("company_form"):
         for company in missing:
-            st.session_state.missing_companies[company] = st.text_input(
-                f"RE Constituent ID for '{company}':",
-                key=f"company_id_{company}"
-            )
+            col_label, col_copy = st.columns([6, 1])
+            with col_label:
+                st.session_state.missing_companies[company] = st.text_input(
+                    f"RE Constituent ID for '{company}':",
+                    key=f"company_id_{company}"
+                )
+            with col_copy:
+                st.markdown("<div style='padding-top: 28px'>", unsafe_allow_html=True)
+                st.code(company, language=None)
+                st.markdown("</div>", unsafe_allow_html=True)
 
         if st.form_submit_button("Save Company Mappings"):
             all_filled = all(
@@ -745,16 +750,6 @@ def main():
         st.session_state.re_api.set_tokens(**st.session_state.re_tokens)
 
     render_sidebar()
-
-    components.html("""
-    <script>
-    window.parent.document.addEventListener('keydown', function(e) {
-        if ((e.key === 'c' || e.key === 'C') && (e.ctrlKey || e.metaKey)) {
-            e.stopPropagation();
-        }
-    }, true);
-    </script>
-    """, height=0)
 
     tab1, tab2 = st.tabs(["Part 1 - Individuals", "Part 2 - Companies"])
 
