@@ -1,6 +1,7 @@
 """CyberGrants source transformer."""
 
 import io
+from datetime import date
 import pandas as pd
 
 from .base import BaseSource
@@ -108,10 +109,12 @@ class CyberGrantsSource(BaseSource):
         company_config: dict,
         entity_config: dict,
         cache_df: pd.DataFrame
-    ) -> pd.DataFrame:
+    ) -> tuple[pd.DataFrame, set]:
         """Transform CyberGrants data for Part 2 (company donations)."""
         gl_post_date = format_gl_post_date()
+        today_str = date.today().strftime("%m/%d/%Y")
         company_rows = []
+        stale_cache_rows = set()
 
         company_df = df[df["Payment Funding Source"].str.lower() == "company"] if "Payment Funding Source" in df.columns else pd.DataFrame()
 
@@ -151,6 +154,9 @@ class CyberGrantsSource(BaseSource):
 
                         soft_credit_id = str(cache_row.get("Constituent ID", ""))
                         branch = str(cache_row.get("Branch", "Main")) or "Main"
+                        cache_added = str(cache_row.get("Date Added to Cache", ""))
+                        if cache_added != today_str:
+                            stale_cache_rows.add(len(company_rows))
                         break
 
             match_amount = row.get("Match Amount", 0)
@@ -181,4 +187,4 @@ class CyberGrantsSource(BaseSource):
 
             company_rows.append(output_row)
 
-        return pd.DataFrame(company_rows)
+        return pd.DataFrame(company_rows), stale_cache_rows
