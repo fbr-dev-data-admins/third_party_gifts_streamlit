@@ -4,6 +4,7 @@ from datetime import date, datetime, timedelta
 from typing import Union
 import pandas as pd
 import holidays
+import pytz
 
 
 def format_date(dt: Union[str, date, datetime, pd.Timestamp], output_format: str = "%m/%d/%y") -> str:
@@ -62,7 +63,9 @@ def get_previous_business_day(from_date: Union[date, None] = None) -> date:
 def format_gl_post_date() -> str:
     """
     Get the GL Post Date formatted as MM/DD/YY.
-
-    This is the previous business day from today.
+    This is the previous business day based on current date in Denver (MT),
+    persisting for the full calendar day until midnight Denver time.
     """
-    return format_date(get_previous_business_day())
+    denver_tz = pytz.timezone("America/Denver")
+    denver_today = datetime.now(denver_tz).date()
+    return format_date(get_previous_business_day(from_date=denver_today))
