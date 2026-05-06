@@ -14,12 +14,14 @@ HEADER_FILL = PatternFill(start_color="D9E1F2", end_color="D9E1F2", fill_type="s
 YELLOW_FILL = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
 PALE_YELLOW_FILL = PatternFill(start_color="FFFFE0", end_color="FFFFE0", fill_type="solid")
 ORANGE_FILL = PatternFill(start_color="F2AC57", end_color="F2AC57", fill_type="solid")
+PALE_GREEN_FILL = PatternFill(start_color="E2EFDA", end_color="E2EFDA", fill_type="solid")
 
 
 def create_import_excel(
     df: pd.DataFrame,
     benevity_rows: Optional[set] = None,
-    benevity_reason_rows: Optional[set] = None
+    benevity_reason_rows: Optional[set] = None,
+    stale_cache_rows: Optional[set] = None
 ) -> bytes:
     """
     Create the unified import Excel file with conditional formatting.
@@ -38,6 +40,7 @@ def create_import_excel(
 
     benevity_rows = benevity_rows or set()
     benevity_reason_rows = benevity_reason_rows or set()
+    stale_cache_rows = stale_cache_rows or set()
 
     for r_idx, row in enumerate(dataframe_to_rows(df, index=False, header=True)):
         for c_idx, value in enumerate(row, 1):
@@ -84,6 +87,11 @@ def create_import_excel(
         if ref_col_idx:
             ws.cell(row=excel_row, column=ref_col_idx).fill = YELLOW_FILL
 
+    for row_idx in stale_cache_rows:
+        excel_row = row_idx + 2
+        for c_idx in range(1, len(columns) + 1):
+            ws.cell(row=excel_row, column=c_idx).fill = PALE_GREEN_FILL
+            
     for row_idx in range(len(df)):
         excel_row = row_idx + 2
         constituent_id = df.iloc[row_idx]["Constituent ID"] if "Constituent ID" in df.columns else ""
