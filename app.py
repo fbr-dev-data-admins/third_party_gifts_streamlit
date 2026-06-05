@@ -537,6 +537,14 @@ def render_part2():
 
     st.subheader("Step 2: Cache Matching")
 
+    # DEBUG - remove after troubleshooting
+    if st.session_state.part2_query_results:
+        st.write("Sample result row:", st.session_state.part2_query_results[0])
+        company_ids = set(st.session_state.company_config.values())
+        entity_ids = set(st.session_state.entity_config.values())
+        st.write("Company IDs:", company_ids)
+        st.write("Entity IDs:", entity_ids)
+
     unmatched_cache = st.session_state.cache_df[
         (st.session_state.cache_df["Constituent ID"].isna()) |
         (st.session_state.cache_df["Constituent ID"] == "")
