@@ -556,6 +556,10 @@ def render_part2():
         (st.session_state.cache_df["Constituent ID"] == "")
     ]
 
+    for col in ["Constituent ID", "Branch"]:
+        if col in st.session_state.cache_df.columns:
+            st.session_state.cache_df[col] = st.session_state.cache_df[col].astype(object)
+
     if unmatched_cache.empty:
         st.info("No unmatched donors in cache")
     else:
