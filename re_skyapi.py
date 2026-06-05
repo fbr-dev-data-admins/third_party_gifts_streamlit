@@ -141,13 +141,15 @@ class RESkyAPI:
         return {
             "Authorization": f"Bearer {self.access_token}",
             "Bb-Api-Subscription-Key": self.subscription_key,
-            "Content-Type": "application/json"
+            "Cache-Control": "no-cache",
         }
 
     def execute_query(
         self,
         query_id: str,
-        poll_interval: int = 10,
+        initial_wait: int = 10,
+        poll_interval: int = 5,
+        max_attempts: int = 60,
         status_callback=None
     ) -> list[dict]:
         """
@@ -155,7 +157,9 @@ class RESkyAPI:
 
         Args:
             query_id: ID of the saved query to execute
-            poll_interval: Seconds between status polls (default 10)
+            initial_wait: Seconds to wait before first poll (default 10)
+            poll_interval: Seconds between status polls (default 5)
+            max_attempts: Maximum poll attempts before timeout (default 60)
             status_callback: Optional callback function for status updates
 
         Returns:
@@ -164,36 +168,69 @@ class RESkyAPI:
         if not self.ensure_valid_token():
             raise RuntimeError("Not authenticated or unable to refresh token")
 
-        start_url = f"{self.API_BASE}/query/v1/queries/{query_id}/results"
-        response = requests.post(start_url, headers=self._get_headers())
+        # --- Trigger ---
+        start_url = f"{self.API_BASE}/query/queries/executebyid?product=RE&module=None"
+        payload = {
+            "id": int(query_id),
+            "ux_mode": "Asynchronous",
+            "output_format": "Json",
+            "formatting_mode": "Export",
+            "sql_generation_mode": "Query",
+        }
+        response = requests.post(start_url, headers=self._get_headers(), json=payload)
         response.raise_for_status()
 
         job_data = response.json()
         job_id = job_data.get("id")
-
         if not job_id:
             raise RuntimeError("No job ID returned from query execution")
 
-        time.sleep(poll_interval)
+        if status_callback:
+            status_callback(f"Job started. ID: {job_id}  Status: {job_data.get('status', '')}")
 
-        job_url = f"{self.API_BASE}/query/v1/jobs/{job_id}"
+        # --- Poll ---
+        poll_url = (
+            f"{self.API_BASE}/query/jobs/{job_id}"
+            f"?product=RE&module=None&include_read_url=OnceCompleted"
+        )
 
-        while True:
-            response = requests.get(job_url, headers=self._get_headers())
+        time.sleep(initial_wait)
+
+        for attempt in range(1, max_attempts + 1):
+            response = requests.get(poll_url, headers=self._get_headers())
             response.raise_for_status()
 
             job_status = response.json()
-            status = job_status.get("status", "Unknown")
+            status = (job_status.get("status") or "").lower()
+            row_count = job_status.get("row_count", "?")
 
             if status_callback:
-                status_callback(f"Status: {status}")
+                status_callback(
+                    f"Poll {attempt}/{max_attempts} — status: {status}  rows: {row_count}"
+                )
 
-            if status == "Completed":
-                return job_status.get("results", [])
-            elif status in ["Failed", "Cancelled"]:
-                raise RuntimeError(f"Query job {status.lower()}")
+            if status == "completed":
+                sas_uri = job_status.get("sas_uri")
+                if not sas_uri:
+                    raise RuntimeError("Job completed but no sas_uri in response")
+                break
+            elif status in ("failed", "error", "cancelled"):
+                raise RuntimeError(f"Query job ended with status '{status}'")
+
+            if attempt == max_attempts:
+                raise RuntimeError(f"Timed out after {max_attempts} poll attempts")
 
             time.sleep(poll_interval)
+
+        # --- Fetch results from pre-signed SAS URI (no auth headers) ---
+        results_response = requests.get(sas_uri)
+        results_response.raise_for_status()
+
+        results = results_response.json()
+        if status_callback:
+            status_callback(f"Retrieval complete. Total rows: {len(results)}")
+
+        return results
 
     def set_tokens(
         self,
