@@ -501,6 +501,9 @@ def render_part2():
             "Please complete Part 1 and confirm you have committed the import "
             "in Raiser's Edge before proceeding."
         )
+        if st.button("I Confirm", help="Use this if your session was restarted after completing Part 1"):
+            st.session_state.part1_complete = True
+            st.rerun()
         return
 
     if not st.session_state.re_api or not st.session_state.re_api.is_authenticated():
