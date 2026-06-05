@@ -535,15 +535,21 @@ def render_part2():
     if st.session_state.part2_query_results is None:
         return
 
-    st.subheader("Step 2: Cache Matching")
+    def _normalize_date(val) -> str:
+        """Normalize date strings to MM/DD/YYYY for comparison."""
+        try:
+            return pd.to_datetime(val).strftime("%m/%d/%Y")
+        except Exception:
+            return str(val).strip()
 
-    # DEBUG - remove after troubleshooting
-    if st.session_state.part2_query_results:
-        st.write("Sample result row:", st.session_state.part2_query_results[0])
-        company_ids = set(st.session_state.company_config.values())
-        entity_ids = set(st.session_state.entity_config.values())
-        st.write("Company IDs:", company_ids)
-        st.write("Entity IDs:", entity_ids)
+    def _normalize_amount(val) -> float:
+        """Normalize amount strings/floats to float for comparison."""
+        try:
+            return round(float(str(val).replace("$", "").replace(",", "").strip()), 2)
+        except Exception:
+            return 0.0
+
+    st.subheader("Step 2: Cache Matching")
 
     unmatched_cache = st.session_state.cache_df[
         (st.session_state.cache_df["Constituent ID"].isna()) |
@@ -568,8 +574,8 @@ def render_part2():
             cache_last = str(cache_row.get("Last Name", "")).lower()
             cache_company = str(cache_row.get("Company", ""))
             cache_entity = str(cache_row.get("Entity", ""))
-            cache_date = str(cache_row.get("Gift Date", ""))
-            cache_amount = cache_row.get("Gift Amount", 0)
+            cache_date = _normalize_date(cache_row.get("Gift Date", ""))
+            cache_amount = _normalize_amount(cache_row.get("Gift Amount", 0))
 
             found_exact = False
             found_fuzzy = False
@@ -577,8 +583,8 @@ def render_part2():
             for result in query_results:
                 result_first = str(result.get("First Name", "")).lower()
                 result_last = str(result.get("Last Name", "")).lower()
-                result_date = str(result.get("Gift Date", ""))
-                result_amount = result.get("Gift Amount", 0)
+                result_date = _normalize_date(result.get("Gift Date", ""))
+                result_amount = _normalize_amount(result.get("Gift Amount", 0))
                 sc_id = result.get("SC Constituent ID", "")
 
                 is_company_sc = sc_id in company_ids
