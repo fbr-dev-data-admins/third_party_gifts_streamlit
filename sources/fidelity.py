@@ -14,6 +14,7 @@ class FidelitySource(BaseSource):
     """Transformer for Fidelity Marketplace Giving donation reports."""
 
     name = "Fidelity Marketplace Giving"
+    entity_constituent_id = "23-14720"
 
     def detect(self, df_raw: pd.DataFrame, raw_bytes: bytes) -> bool:
         """Detect Fidelity by header starting with specific columns."""
@@ -41,8 +42,7 @@ class FidelitySource(BaseSource):
     def transform_part1(
         self,
         df: pd.DataFrame,
-        company_config: dict,
-        entity_config: dict
+        company_config: dict
     ) -> tuple[pd.DataFrame, pd.DataFrame, set, set]:
         """Transform Fidelity data for Part 1 import (Individual donations)."""
         gl_post_date = format_gl_post_date()
@@ -93,7 +93,7 @@ class FidelitySource(BaseSource):
                 "Branch": "Main",
                 "Gift Reference": gift_reference,
                 "Soft Credit Company ID": "",
-                "Soft Credit Entity ID": "",
+                "Soft Credit Entity ID": self.entity_constituent_id,
                 "First Name": first_name,
                 "Middle Name": middle_name,
                 "Last Name": last_name,
@@ -117,7 +117,6 @@ class FidelitySource(BaseSource):
         self,
         df: pd.DataFrame,
         company_config: dict,
-        entity_config: dict,
         cache_df: pd.DataFrame
     ) -> tuple[pd.DataFrame, set]:
         """Transform Fidelity data for Part 2 (Company/Matching Gift donations)."""
@@ -168,12 +167,13 @@ class FidelitySource(BaseSource):
                             stale_cache_rows.add(len(company_rows))
                         break
 
-            gift_reference = self._build_gift_reference(company=company_name)
             if first and last:
-                gift_reference = f"matching gift for {first} {last} ; {gift_reference}"
+                gift_reference = f"matching gift for {first} {last}"
+            else:
+                gift_reference = self._build_gift_reference(company=company_name)
 
             output_row = {
-                "RE Constituent ID": company_config.get(company_name, ""),
+                "RE Constituent ID": self._company_id(company_config, company_name),
                 "Gift Date": gift_date,
                 "GL Post Date": gl_post_date,
                 "Gift Amount": amount,
@@ -182,7 +182,7 @@ class FidelitySource(BaseSource):
                 "Branch": branch,
                 "Gift Reference": gift_reference,
                 "Soft Credit Individual ID": soft_credit_id,
-                "Soft Credit Entity ID": "",
+                "Soft Credit Entity ID": self.entity_constituent_id,
             }
 
             company_rows.append(output_row)
