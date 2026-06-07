@@ -55,7 +55,6 @@ def init_session_state():
         "uploaded_files": {},
         "file_sources": {},
         "company_config": {},
-        "entity_config": {},
         "cache_df": pd.DataFrame(),
         "part1_complete": False,
         "part1_result": None,
@@ -77,7 +76,7 @@ def init_session_state():
 
 
 def load_configs():
-    """Load company and entity configs from GitHub or local."""
+    """Load company config from GitHub or local."""
     if st.session_state.use_github:
         try:
             config_repo = get_secret("github.config_repo")
@@ -85,9 +84,6 @@ def load_configs():
 
             st.session_state.company_config = load_json_from_github(
                 config_repo, "config/company.json", token
-            )
-            st.session_state.entity_config = load_json_from_github(
-                config_repo, "config/entity.json", token
             )
         except Exception as e:
             st.warning(f"Could not load configs from GitHub: {e}. Using local files.")
@@ -103,11 +99,6 @@ def load_local_configs():
         st.session_state.company_config = load_local_json("config/company.json")
     except FileNotFoundError:
         st.session_state.company_config = {}
-
-    try:
-        st.session_state.entity_config = load_local_json("config/entity.json")
-    except FileNotFoundError:
-        st.session_state.entity_config = {}
 
 
 def get_file_hash(content: bytes) -> str:
@@ -264,7 +255,7 @@ def render_missing_sources():
         st.success("All registered sources have files uploaded")
 
 
-def check_missing_companies() -> dict[str, str]:
+def check_missing_companies() -> dict[str, dict[str, str]]:
     """Check for companies not in company.json and return them."""
     missing = {}
 
@@ -280,7 +271,7 @@ def check_missing_companies() -> dict[str, str]:
 
         for company in companies:
             if company and company not in st.session_state.company_config:
-                missing[company] = ""
+                missing[company] = {"id": "", "re_name": ""}
 
     return missing
 
@@ -301,22 +292,32 @@ def render_company_validation():
 
     with st.form("company_form"):
         for company in missing:
-            st.session_state.missing_companies[company] = st.text_input(
-                f"RE Constituent ID for '{company}':",
-                key=f"company_id_{company}"
-            )
+            st.session_state.missing_companies[company] = {
+                "id": st.text_input(
+                    f"RE Constituent ID for '{company}':",
+                    key=f"company_id_{company}"
+                ),
+                "re_name": st.text_input(
+                    f"Raiser's Edge Name for '{company}':",
+                    key=f"company_re_name_{company}"
+                ),
+            }
 
         if st.form_submit_button("Save Company Mappings"):
             all_filled = all(
-                v.strip() for v in st.session_state.missing_companies.values()
+                v["id"].strip() and v["re_name"].strip()
+                for v in st.session_state.missing_companies.values()
             )
 
             if not all_filled:
-                st.error("Please fill in all company Constituent IDs")
+                st.error("Please fill in all company Constituent IDs and Raiser's Edge Names")
                 return False
 
-            for company, import_id in st.session_state.missing_companies.items():
-                st.session_state.company_config[company] = import_id.strip()
+            for company, info in st.session_state.missing_companies.items():
+                st.session_state.company_config[company] = {
+                    "id": info["id"].strip(),
+                    "re_name": info["re_name"].strip(),
+                }
 
             if st.session_state.use_github:
                 try:
@@ -363,8 +364,7 @@ def process_part1():
 
         unified_df, grants_df, benevity_rows, benevity_reason_rows = source.transform_part1(
             df,
-            st.session_state.company_config,
-            st.session_state.entity_config
+            st.session_state.company_config
         )
 
         if not unified_df.empty:
@@ -566,8 +566,10 @@ def render_part2():
         st.write(f"Found {len(unmatched_cache)} unmatched donors in cache")
 
         query_results = st.session_state.part2_query_results
-        company_ids = set(st.session_state.company_config.values())
-        entity_ids = set(st.session_state.entity_config.values())
+        company_ids = set(v["id"] for v in st.session_state.company_config.values())
+        entity_ids = set(
+            source_class.entity_constituent_id for source_class in SOURCE_REGISTRY.values()
+        )
 
         exact_matches = []
         fuzzy_candidates = []
@@ -580,6 +582,8 @@ def render_part2():
             cache_entity = str(cache_row.get("Entity", ""))
             cache_date = _normalize_date(cache_row.get("Gift Date", ""))
             cache_amount = _normalize_amount(cache_row.get("Gift Amount", 0))
+
+            is_anonymous_cache_row = cache_first in ("", "nan") and cache_last in ("", "nan")
 
             found_exact = False
             found_fuzzy = False
@@ -595,6 +599,18 @@ def render_part2():
                 is_entity_sc = sc_id in entity_ids
 
                 if not is_company_sc and not is_entity_sc:
+                    continue
+
+                if is_anonymous_cache_row:
+                    if cache_date == result_date and cache_amount == result_amount:
+                        exact_matches.append({
+                            "cache_idx": idx,
+                            "result": result,
+                            "constituent_id": "22-2934",
+                            "branch": result.get("Branch", "Main")
+                        })
+                        found_exact = True
+                        break
                     continue
 
                 if (cache_first == result_first and
@@ -705,7 +721,6 @@ def render_part2():
                 company_df, stale_rows = source.transform_part2(
                     df,
                     st.session_state.company_config,
-                    st.session_state.entity_config,
                     st.session_state.cache_df
                 )
 
