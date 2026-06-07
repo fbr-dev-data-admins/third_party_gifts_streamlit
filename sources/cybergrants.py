@@ -13,6 +13,7 @@ class CyberGrantsSource(BaseSource):
     """Transformer for CyberGrants donation reports."""
 
     name = "CyberGrants"
+    entity_constituent_id = "20-175516"
 
     def detect(self, df_raw: pd.DataFrame, raw_bytes: bytes) -> bool:
         """Detect CyberGrants by column index 2 containing 'CyberGrants'."""
@@ -37,8 +38,7 @@ class CyberGrantsSource(BaseSource):
     def transform_part1(
         self,
         df: pd.DataFrame,
-        company_config: dict,
-        entity_config: dict
+        company_config: dict
     ) -> tuple[pd.DataFrame, pd.DataFrame, set, set]:
         """Transform CyberGrants data for Part 1 import (employee donations)."""
         gl_post_date = format_gl_post_date()
@@ -70,8 +70,8 @@ class CyberGrantsSource(BaseSource):
                 "Donation Type": donation_type,
                 "Branch": branch,
                 "Gift Reference": gift_reference,
-                "Soft Credit Company ID": company_config.get(company, ""),
-                "Soft Credit Entity ID": "",
+                "Soft Credit Company ID": self._company_id(company_config, company),
+                "Soft Credit Entity ID": self.entity_constituent_id,
                 "First Name": str(row.get("Donor First Name", "")).title() if pd.notna(row.get("Donor First Name")) else "",
                 "Middle Name": "",
                 "Last Name": str(row.get("Donor Last Name", "")).title() if pd.notna(row.get("Donor Last Name")) else "",
@@ -107,7 +107,6 @@ class CyberGrantsSource(BaseSource):
         self,
         df: pd.DataFrame,
         company_config: dict,
-        entity_config: dict,
         cache_df: pd.DataFrame
     ) -> tuple[pd.DataFrame, set]:
         """Transform CyberGrants data for Part 2 (company donations)."""
@@ -168,12 +167,13 @@ class CyberGrantsSource(BaseSource):
             display_first = str(row.get("Donor First Name", "")).title() if pd.notna(row.get("Donor First Name")) else ""
             display_last = str(row.get("Donor Last Name", "")).title() if pd.notna(row.get("Donor Last Name")) else ""
 
-            gift_reference = self._build_gift_reference(company=company)
             if display_first and display_last:
-                gift_reference = f"matching gift for {display_first} {display_last} ; {gift_reference}"
+                gift_reference = f"matching gift for {display_first} {display_last}"
+            else:
+                gift_reference = self._build_gift_reference(company=company)
 
             output_row = {
-                "RE Constituent ID": company_config.get(company, ""),
+                "RE Constituent ID": self._company_id(company_config, company),
                 "Gift Date": gift_date,
                 "GL Post Date": gl_post_date,
                 "Gift Amount": match_amount,
@@ -182,7 +182,7 @@ class CyberGrantsSource(BaseSource):
                 "Branch": branch,
                 "Gift Reference": gift_reference,
                 "Soft Credit Individual ID": soft_credit_id,
-                "Soft Credit Entity ID": "",
+                "Soft Credit Entity ID": self.entity_constituent_id,
             }
 
             company_rows.append(output_row)
