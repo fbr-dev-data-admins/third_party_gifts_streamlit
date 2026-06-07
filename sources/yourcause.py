@@ -13,6 +13,7 @@ class YourCauseSource(BaseSource):
     """Transformer for YourCause donation reports."""
 
     name = "YourCause"
+    entity_constituent_id = "133916"
 
     def detect(self, df_raw: pd.DataFrame, raw_bytes: bytes) -> bool:
         """Detect YourCause by first three column names."""
@@ -36,8 +37,7 @@ class YourCauseSource(BaseSource):
     def transform_part1(
         self,
         df: pd.DataFrame,
-        company_config: dict,
-        entity_config: dict
+        company_config: dict
     ) -> tuple[pd.DataFrame, pd.DataFrame, set, set]:
         """Transform YourCause data for Part 1 import (Individual donations)."""
         gl_post_date = format_gl_post_date()
@@ -90,8 +90,8 @@ class YourCauseSource(BaseSource):
                 "Donation Type": "",
                 "Branch": branch,
                 "Gift Reference": gift_reference,
-                "Soft Credit Company ID": company_config.get(company, ""),
-                "Soft Credit Entity ID": "",
+                "Soft Credit Company ID": self._company_id(company_config, company),
+                "Soft Credit Entity ID": self.entity_constituent_id,
                 "First Name": "" if is_anonymous else first_name.title(),
                 "Middle Name": "",
                 "Last Name": "" if is_anonymous else last_name.title(),
@@ -127,7 +127,6 @@ class YourCauseSource(BaseSource):
         self,
         df: pd.DataFrame,
         company_config: dict,
-        entity_config: dict,
         cache_df: pd.DataFrame
     ) -> tuple[pd.DataFrame, set]:
         """Transform YourCause data for Part 2 (Company donations)."""
@@ -174,12 +173,13 @@ class YourCauseSource(BaseSource):
             display_first = str(row.get("Match Donor First Name", "")).title() if pd.notna(row.get("Match Donor First Name")) else ""
             display_last = str(row.get("Match Donor Last Name", "")).title() if pd.notna(row.get("Match Donor Last Name")) else ""
 
-            gift_reference = self._build_gift_reference(company=company)
             if display_first and display_last:
-                gift_reference = f"matching gift for {display_first} {display_last} ; {gift_reference}"
+                gift_reference = f"matching gift for {display_first} {display_last}"
+            else:
+                gift_reference = self._build_gift_reference(company=company)
 
             output_row = {
-                "RE Constituent ID": company_config.get(company, ""),
+                "RE Constituent ID": self._company_id(company_config, company),
                 "Gift Date": gift_date,
                 "GL Post Date": gl_post_date,
                 "Gift Amount": amount,
@@ -188,7 +188,7 @@ class YourCauseSource(BaseSource):
                 "Branch": branch,
                 "Gift Reference": gift_reference,
                 "Soft Credit Individual ID": soft_credit_id,
-                "Soft Credit Entity ID": "",
+                "Soft Credit Entity ID": self.entity_constituent_id,
             }
 
             company_rows.append(output_row)
