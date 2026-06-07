@@ -9,6 +9,7 @@ class BaseSource(ABC):
     """Abstract base class for workplace giving platform source transformers."""
 
     name: str = "Base"
+    entity_constituent_id: str = ""
 
     @abstractmethod
     def detect(self, df_raw: pd.DataFrame, raw_bytes: bytes) -> bool:
@@ -41,16 +42,14 @@ class BaseSource(ABC):
     def transform_part1(
         self,
         df: pd.DataFrame,
-        company_config: dict,
-        entity_config: dict
+        company_config: dict
     ) -> tuple[pd.DataFrame, pd.DataFrame, set, set]:
         """
         Transform source data for Part 1 (Individuals) import.
 
         Args:
             df: Source DataFrame
-            company_config: Company name -> RE Import ID mapping
-            entity_config: Entity name -> RE Import ID mapping
+            company_config: Company name -> {"id": RE Import ID, "re_name": Raiser's Edge name} mapping
 
         Returns:
             Tuple of:
@@ -66,7 +65,6 @@ class BaseSource(ABC):
         self,
         df: pd.DataFrame,
         company_config: dict,
-        entity_config: dict,
         cache_df: pd.DataFrame
     ) -> tuple[pd.DataFrame, set]:
         """
@@ -74,8 +72,7 @@ class BaseSource(ABC):
 
         Args:
             df: Source DataFrame
-            company_config: Company name -> RE Import ID mapping
-            entity_config: Entity name -> RE Import ID mapping
+            company_config: Company name -> {"id": RE Import ID, "re_name": Raiser's Edge name} mapping
             cache_df: Donor cache DataFrame for matching
 
         Returns:
@@ -99,6 +96,19 @@ class BaseSource(ABC):
             Set of company names
         """
         return set()
+
+    def _company_id(self, company_config: dict, company: str) -> str:
+        """
+        Look up the RE Import ID for a company from the company config.
+
+        Args:
+            company_config: Company name -> {"id": RE Import ID, "re_name": Raiser's Edge name} mapping
+            company: Company display name as read from the source file
+
+        Returns:
+            RE Import ID string, or empty string if not configured
+        """
+        return company_config.get(company, {}).get("id", "")
 
     def _check_branch(self, text: Optional[str]) -> str:
         """
