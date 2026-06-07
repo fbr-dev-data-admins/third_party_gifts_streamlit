@@ -36,6 +36,7 @@ To add support for a new workplace giving platform:
    
    class NewSource(BaseSource):
        name = "New Source"
+       entity_constituent_id = "12345"  # RE Constituent ID for this platform's entity soft credit
        
        def detect(self, df_raw, raw_bytes):
            # Return True if this file matches your source
@@ -49,12 +50,12 @@ To add support for a new workplace giving platform:
            # Return set of company names from the data
            pass
        
-       def transform_part1(self, df, company_config, entity_config):
+       def transform_part1(self, df, company_config):
            # Transform individual donations
            # Return (unified_df, grants_df, benevity_rows, reason_rows)
            pass
        
-       def transform_part2(self, df, company_config, entity_config, cache_df):
+       def transform_part2(self, df, company_config, cache_df):
            # Transform company/matching gifts
            # Return unified_companies_df
            pass
@@ -74,27 +75,29 @@ To add support for a new workplace giving platform:
 
 ### company.json
 
-Maps company display names to RE Import IDs:
+Maps company display names (as read from source files) to their RE Import ID
+and their name as it appears in Raiser's Edge:
 
 ```json
 {
-  "Acme Corporation": "12345",
-  "Widget Inc.": "67890"
+  "Acme Corporation": {
+    "id": "12345",
+    "re_name": "Acme Corp"
+  },
+  "Widget Inc.": {
+    "id": "67890",
+    "re_name": "Widget Incorporated"
+  }
 }
 ```
 
-### entity.json
+The configuration file is stored in GitHub (configured in secrets) and synced
+automatically. New companies encountered during processing are prompted for
+both their RE Constituent ID and Raiser's Edge name via the UI.
 
-Maps entity display names to RE Import IDs:
-
-```json
-{
-  "United Way": "11111",
-  "Community Foundation": "22222"
-}
-```
-
-Configuration files are stored in GitHub (configured in secrets) and synced automatically. New companies encountered during processing are added via the UI.
+Each source's RE Constituent ID for entity soft credits (e.g. Benevity,
+CyberGrants) is hardcoded as the `entity_constituent_id` class attribute on
+the source transformer in `sources/`.
 
 ## Secrets Configuration
 
