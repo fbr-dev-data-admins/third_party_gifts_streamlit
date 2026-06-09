@@ -886,5 +886,17 @@
   "GRAHAM HOLDINGS COMPANY": {
     "id": "23-15927",
     "re_name": "Graham Holdings Company"
+  },
+  "SM ENERGY COMPANY": {
+    "id": "21-10828",
+    "re_name": "SM Energy Company Fund"
+  },
+  "VMware Foundation": {
+    "id": "97379",
+    "re_name": "VMware Foundation"
+  },
+  "CoBank, ACB": {
+    "id": "23-427",
+    "re_name": "CoBank Corporate Citizenship Fund"
   }
 }
