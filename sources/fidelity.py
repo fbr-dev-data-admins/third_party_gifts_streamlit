@@ -170,7 +170,7 @@ class FidelitySource(BaseSource):
             if first and last:
                 gift_reference = f"matching gift for {first} {last}"
             else:
-                gift_reference = self._build_gift_reference(company=company_name)
+                gift_reference = self._build_gift_reference(company=self._company_re_name(company_config, company_name))
 
             output_row = {
                 "RE Constituent ID": self._company_id(company_config, company_name),
