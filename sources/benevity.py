@@ -75,7 +75,7 @@ class BenevitySource(BaseSource):
             if reason and reason not in ["User Donation", ""]:
                 gift_ref_parts.append(reason)
 
-            gift_reference = self._build_gift_reference(*gift_ref_parts, company=company)
+            gift_reference = self._build_gift_reference(*gift_ref_parts, company=self._company_re_name(company_config, company))
 
             frequency = str(row.get("Donation Frequency", "")) if pd.notna(row.get("Donation Frequency")) else ""
             donation_type = "Recurring" if frequency.lower() == "recurring" else ""
@@ -202,7 +202,7 @@ class BenevitySource(BaseSource):
             if not is_anonymous and first_name and last_name:
                 gift_reference = f"matching gift for {first_name.title()} {last_name.title()}"
             else:
-                gift_reference = self._build_gift_reference(company=company)
+                gift_reference = self._build_gift_reference(company=self._company_re_name(company_config, company))
 
             output_row = {
                 "RE Constituent ID": self._company_id(company_config, company),
