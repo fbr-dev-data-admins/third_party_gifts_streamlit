@@ -19,7 +19,7 @@ class YourCauseSource(BaseSource):
         """Detect YourCause by first three column names (case-insensitive)."""
         try:
             cols = [c.strip().lower() for c in list(df_raw.columns)[:3]]
-            expected = ["donation date", "company", "transaction id"]
+            expected = ["donation date", "company name", "transaction id"]
             return cols == expected
         except Exception:
             return False
@@ -29,9 +29,9 @@ class YourCauseSource(BaseSource):
         return pd.read_csv(io.BytesIO(raw_bytes))
 
     def get_companies(self, df: pd.DataFrame) -> set:
-        """Get unique company names from Company column."""
-        if "Company" in df.columns:
-            return set(df["Company"].dropna().unique())
+        """Get unique company names from Company Name column."""
+        if "Company Name" in df.columns:
+            return set(df["Company Name"].dropna().unique())
         return set()
 
     def transform_part1(
@@ -46,7 +46,7 @@ class YourCauseSource(BaseSource):
         individual_df = df[df["Donor Type"] == "Individual"] if "Donor Type" in df.columns else df
 
         for _, row in individual_df.iterrows():
-            company = str(row.get("Company", "")) if pd.notna(row.get("Company")) else ""
+            company = str(row.get("Company Name", "")) if pd.notna(row.get("Company Name")) else ""
             gift_date = format_date(row.get("Donation Date"))
 
             full_name = str(row.get("Donor Full Name", "")) if pd.notna(row.get("Donor Full Name")) else ""
@@ -95,7 +95,7 @@ class YourCauseSource(BaseSource):
                 "Last Name": "" if is_anonymous else last_name.title(),
                 "Address": "" if is_anonymous else address,
                 "City": "" if is_anonymous else (str(row.get("Donor City", "")) if pd.notna(row.get("Donor City")) else ""),
-                "State": "" if is_anonymous else (str(row.get("Donor State", "")) if pd.notna(row.get("Donor State")) else ""),
+                "State": "" if is_anonymous else (str(row.get("Donor State/Province/Region", "")) if pd.notna(row.get("Donor State/Province/Region")) else ""),
                 "ZIP": "" if is_anonymous else (str(row.get("Donor Postal Code", "")) if pd.notna(row.get("Donor Postal Code")) else ""),
                 "Country": (
                     "" if is_anonymous else (
@@ -104,14 +104,14 @@ class YourCauseSource(BaseSource):
                             "United States" if any([
                                 str(row.get("Donor Address", "")).strip() not in ["", "nan"],
                                 str(row.get("Donor City", "")).strip() not in ["", "nan"],
-                                str(row.get("Donor State", "")).strip() not in ["", "nan"],
+                                str(row.get("Donor State/Province/Region", "")).strip() not in ["", "nan"],
                                 str(row.get("Donor Postal Code", "")).strip() not in ["", "nan"],
                             ]) else ""
                         )
                     )
                 ),
                 "Primary Phone": "",
-                "Email": "" if is_anonymous else (str(row.get("Donor Email", "")) if pd.notna(row.get("Donor Email")) else ""),
+                "Email": "" if is_anonymous else (str(row.get("Donor Email Address", "")) if pd.notna(row.get("Donor Email Address")) else ""),
             }
 
             unified_rows.append(output_row)
@@ -136,13 +136,13 @@ class YourCauseSource(BaseSource):
         company_df = df[df["Donor Type"] == "Company"] if "Donor Type" in df.columns else pd.DataFrame()
 
         for _, row in company_df.iterrows():
-            company = str(row.get("Company", "")) if pd.notna(row.get("Company")) else ""
+            company = str(row.get("Company Name", "")) if pd.notna(row.get("Company Name")) else ""
             gift_date = format_date(row.get("Donation Date"))
             amount = row.get("Transaction Amount", 0)
 
             match_first = str(row.get("Match Donor First Name", "")).lower() if pd.notna(row.get("Match Donor First Name")) else ""
             match_last = str(row.get("Match Donor Last Name", "")).lower() if pd.notna(row.get("Match Donor Last Name")) else ""
-            match_email = str(row.get("Match Donor Email", "")).lower() if pd.notna(row.get("Match Donor Email")) else ""
+            match_email = str(row.get("Match Donor Email Address", "")).lower() if pd.notna(row.get("Match Donor Email Address")) else ""
 
             soft_credit_id = ""
             branch = "Main"
