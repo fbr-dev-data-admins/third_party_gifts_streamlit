@@ -110,6 +110,21 @@ class BaseSource(ABC):
         """
         return company_config.get(company, {}).get("id", "")
 
+    def _company_re_name(self, company_config: dict, company: str) -> str:
+        """
+        Look up the Raiser's Edge display name for a company from the company config.
+        Falls back to the raw source name if re_name is not set.
+
+        Args:
+            company_config: Company name -> {"id": RE Import ID, "re_name": Raiser's Edge name} mapping
+            company: Company display name as read from the source file
+
+        Returns:
+            Raiser's Edge display name, or raw company name if not configured
+        """
+        re_name = company_config.get(company, {}).get("re_name", "")
+        return re_name if re_name else company
+
     def _check_branch(self, text: Optional[str]) -> str:
         """
         Check if text contains branch indicators.
