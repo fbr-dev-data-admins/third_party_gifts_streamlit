@@ -108,10 +108,17 @@ def get_file_hash(content: bytes) -> str:
 
 def detect_source(raw_bytes: bytes) -> Optional[str]:
     """Auto-detect the source platform from file content."""
+    df_raw = pd.DataFrame()
     try:
         df_raw = pd.read_csv(io.BytesIO(raw_bytes), nrows=5)
     except Exception:
-        df_raw = pd.DataFrame()
+        pass
+
+    if df_raw.empty:
+        try:
+            df_raw = pd.read_excel(io.BytesIO(raw_bytes), nrows=5)
+        except Exception:
+            pass
 
     for source_name, source_class in SOURCE_REGISTRY.items():
         source = source_class()
@@ -170,7 +177,7 @@ def render_file_upload():
 
     uploaded = st.file_uploader(
         "Upload source files",
-        type=["csv"],
+        type=["csv", "xlsx"],
         accept_multiple_files=True
     )
 
