@@ -26,7 +26,9 @@ class BrightFundsSource(BaseSource):
             return False
 
     def read_file(self, raw_bytes: bytes) -> pd.DataFrame:
-        """Read Bright Funds file with headers on row 0."""
+        """Read Bright Funds file (CSV or XLSX) with headers on row 0."""
+        if raw_bytes[:4] == b'PK\x03\x04':
+            return pd.read_excel(io.BytesIO(raw_bytes))
         return pd.read_csv(io.BytesIO(raw_bytes))
 
     def get_companies(self, df: pd.DataFrame) -> set:
