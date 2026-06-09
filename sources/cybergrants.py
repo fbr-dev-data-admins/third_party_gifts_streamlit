@@ -53,7 +53,7 @@ class CyberGrantsSource(BaseSource):
             frequency = str(row.get("Donation Frequency", "")) if pd.notna(row.get("Donation Frequency")) else ""
             donation_type = "Recurring" if frequency.lower() == "recurring" else ""
 
-            gift_reference = self._build_gift_reference(company=company)
+            gift_reference = self._build_gift_reference(company=self._company_re_name(company_config, company))
             branch = "Main"
 
             country = str(row.get("Donor Country", "")) if pd.notna(row.get("Donor Country")) else ""
@@ -170,7 +170,7 @@ class CyberGrantsSource(BaseSource):
             if display_first and display_last:
                 gift_reference = f"matching gift for {display_first} {display_last}"
             else:
-                gift_reference = self._build_gift_reference(company=company)
+                gift_reference = self._build_gift_reference(company=self._company_re_name(company_config, company))
 
             output_row = {
                 "RE Constituent ID": self._company_id(company_config, company),
