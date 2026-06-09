@@ -72,7 +72,7 @@ class BrightFundsSource(BaseSource):
                 email = ""
 
             designation = str(row.get("Designation", "")) if pd.notna(row.get("Designation")) else ""
-            gift_reference = self._build_gift_reference(designation if designation else None, company=company)
+            gift_reference = self._build_gift_reference(designation if designation else None, company=self._company_re_name(company_config, company))
 
             branch = self._check_branch(designation)
 
@@ -157,7 +157,7 @@ class BrightFundsSource(BaseSource):
             if not is_anonymous and first and last:
                 gift_reference = f"matching gift for {first} {last}"
             else:
-                gift_reference = self._build_gift_reference(company=company_name)
+                gift_reference = self._build_gift_reference(company=self._company_re_name(company_config, company_name))
 
             output_row = {
                 "RE Constituent ID": self._company_id(company_config, company_name),
