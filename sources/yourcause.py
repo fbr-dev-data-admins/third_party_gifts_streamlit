@@ -16,10 +16,10 @@ class YourCauseSource(BaseSource):
     entity_constituent_id = "133916"
 
     def detect(self, df_raw: pd.DataFrame, raw_bytes: bytes) -> bool:
-        """Detect YourCause by first three column names."""
+        """Detect YourCause by first three column names (case-insensitive)."""
         try:
-            cols = list(df_raw.columns)[:3]
-            expected = ["Donation Date", "Company", "Transaction Id"]
+            cols = [c.strip().lower() for c in list(df_raw.columns)[:3]]
+            expected = ["donation date", "company", "transaction id"]
             return cols == expected
         except Exception:
             return False
@@ -70,15 +70,13 @@ class YourCauseSource(BaseSource):
             if branch == "WSlope":
                 gift_ref_parts.append("designated WSlope")
 
-            gift_reference = self._build_gift_reference(*gift_ref_parts, company=company)
+            gift_reference = self._build_gift_reference(*gift_ref_parts, company=self._company_re_name(company_config, company))
 
             address1 = str(row.get("Donor Address", "")) if pd.notna(row.get("Donor Address")) else ""
             address2 = str(row.get("Donor Address 2", "")) if pd.notna(row.get("Donor Address 2")) else ""
             address = f"{address1} {address2}".strip()
 
-            country = str(row.get("Donor Country", "")) if pd.notna(row.get("Donor Country")) else ""
-            if not country:
-                country = "United States"
+            donor_country = str(row.get("Donor Country", "")).strip() if pd.notna(row.get("Donor Country")) else ""
 
             output_row = {
                 "RE Constituent ID": "22-2934" if is_anonymous else "",
@@ -101,13 +99,13 @@ class YourCauseSource(BaseSource):
                 "ZIP": "" if is_anonymous else (str(row.get("Donor Postal Code", "")) if pd.notna(row.get("Donor Postal Code")) else ""),
                 "Country": (
                     "" if is_anonymous else (
-                        ("United States" if str(row.get("Country", "")).upper() == "US" else str(row.get("Country", "")))
-                        if str(row.get("Country", "")).strip() not in ["", "Not shared by donor", "nan"] else (
+                        ("United States" if donor_country.upper() == "US" else donor_country)
+                        if donor_country not in ["", "nan"] else (
                             "United States" if any([
-                                str(row.get("Address", "")).strip() not in ["", "Not shared by donor", "nan"],
-                                str(row.get("City", "")).strip() not in ["", "Not shared by donor", "nan"],
-                                str(row.get("State/Province", "")).strip() not in ["", "Not shared by donor", "nan"],
-                                str(row.get("Postal Code", "")).strip() not in ["", "Not shared by donor", "nan"],
+                                str(row.get("Donor Address", "")).strip() not in ["", "nan"],
+                                str(row.get("Donor City", "")).strip() not in ["", "nan"],
+                                str(row.get("Donor State", "")).strip() not in ["", "nan"],
+                                str(row.get("Donor Postal Code", "")).strip() not in ["", "nan"],
                             ]) else ""
                         )
                     )
@@ -176,7 +174,7 @@ class YourCauseSource(BaseSource):
             if display_first and display_last:
                 gift_reference = f"matching gift for {display_first} {display_last}"
             else:
-                gift_reference = self._build_gift_reference(company=company)
+                gift_reference = self._build_gift_reference(company=self._company_re_name(company_config, company))
 
             output_row = {
                 "RE Constituent ID": self._company_id(company_config, company),
