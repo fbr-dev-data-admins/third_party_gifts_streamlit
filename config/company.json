@@ -910,5 +910,41 @@
   "IMA Foundation": {
     "id": "11456",
     "re_name": "IMA Foundation"
+  },
+  "Thrivent": {
+    "id": "26-43209",
+    "re_name": "Thrivent"
+  },
+  "Best Buy": {
+    "id": "21-9271",
+    "re_name": "Best Buy"
+  },
+  "Boeing": {
+    "id": "21-11842",
+    "re_name": "Boeing"
+  },
+  "Graybar": {
+    "id": "LO-1351016",
+    "re_name": "Graybar Electric"
+  },
+  "Emerson Electric": {
+    "id": "14158",
+    "re_name": "Emerson Electric"
+  },
+  "New York Life": {
+    "id": "87850",
+    "re_name": "New York Life Insurance Company"
+  },
+  "Bread Financial": {
+    "id": "97053",
+    "re_name": "Bread Financial"
+  },
+  "First Interstate BancSystem Foundation": {
+    "id": "55856",
+    "re_name": "First Interstate Banc System"
+  },
+  "HCA Healthcare": {
+    "id": "20-161758",
+    "re_name": "HCA HealthONE"
   }
 }
