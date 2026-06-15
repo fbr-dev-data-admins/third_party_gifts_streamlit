@@ -558,96 +558,101 @@ def render_part2():
 
     st.subheader("Step 2: Cache Matching")
 
+    for col in ["Constituent ID", "Branch"]:
+        if col in st.session_state.cache_df.columns:
+            st.session_state.cache_df[col] = st.session_state.cache_df[col].astype(object)
+
     unmatched_cache = st.session_state.cache_df[
         (st.session_state.cache_df["Constituent ID"].isna()) |
         (st.session_state.cache_df["Constituent ID"] == "")
     ]
 
-    for col in ["Constituent ID", "Branch"]:
-        if col in st.session_state.cache_df.columns:
-            st.session_state.cache_df[col] = st.session_state.cache_df[col].astype(object)
+    query_results = st.session_state.part2_query_results
+    company_ids = set(v["id"] for v in st.session_state.company_config.values())
+    entity_ids = set(
+        source_class.entity_constituent_id for source_class in SOURCE_REGISTRY.values()
+    )
 
-    if unmatched_cache.empty:
-        st.info("No unmatched donors in cache")
-    else:
-        st.write(f"Found {len(unmatched_cache)} unmatched donors in cache")
+    exact_matches = []
+    fuzzy_candidates = []
+    matched_cache_indices = set()
 
-        query_results = st.session_state.part2_query_results
-        company_ids = set(v["id"] for v in st.session_state.company_config.values())
-        entity_ids = set(
-            source_class.entity_constituent_id for source_class in SOURCE_REGISTRY.values()
-        )
+    for result in query_results:
+        sc_id = result.get("SC Constituent ID", "")
+        is_company_sc = sc_id in company_ids
+        is_entity_sc = sc_id in entity_ids
 
-        exact_matches = []
-        fuzzy_candidates = []
-        unmatched = []
+        if not is_company_sc and not is_entity_sc:
+            continue
+
+        result_first = str(result.get("First Name", "")).lower()
+        result_last = str(result.get("Last Name", "")).lower()
+        result_date = _normalize_date(result.get("Gift Date", ""))
+        result_amount = _normalize_amount(result.get("Gift Amount", 0))
+        is_anonymous_result = result_first in ("", "nan") and result_last in ("", "nan")
+
+        found_exact = False
 
         for idx, cache_row in unmatched_cache.iterrows():
+            if idx in matched_cache_indices:
+                continue
+
             cache_first = str(cache_row.get("First Name", "")).lower()
             cache_last = str(cache_row.get("Last Name", "")).lower()
-            cache_company = str(cache_row.get("Company", ""))
-            cache_entity = str(cache_row.get("Entity", ""))
             cache_date = _normalize_date(cache_row.get("Gift Date", ""))
             cache_amount = _normalize_amount(cache_row.get("Gift Amount", 0))
 
-            is_anonymous_cache_row = cache_first in ("", "nan") and cache_last in ("", "nan")
-
-            found_exact = False
-            found_fuzzy = False
-
-            for result in query_results:
-                result_first = str(result.get("First Name", "")).lower()
-                result_last = str(result.get("Last Name", "")).lower()
-                result_date = _normalize_date(result.get("Gift Date", ""))
-                result_amount = _normalize_amount(result.get("Gift Amount", 0))
-                sc_id = result.get("SC Constituent ID", "")
-
-                is_company_sc = sc_id in company_ids
-                is_entity_sc = sc_id in entity_ids
-
-                if not is_company_sc and not is_entity_sc:
-                    continue
-
-                if is_anonymous_cache_row:
-                    if cache_date == result_date and cache_amount == result_amount:
-                        exact_matches.append({
-                            "cache_idx": idx,
-                            "result": result,
-                            "constituent_id": "22-2934",
-                            "branch": result.get("Branch", "Main")
-                        })
-                        found_exact = True
-                        break
-                    continue
-
-                if (cache_first == result_first and
-                    cache_last == result_last and
-                    cache_date == result_date and
-                    cache_amount == result_amount):
-
+            if is_anonymous_result:
+                if cache_date == result_date and cache_amount == result_amount:
                     exact_matches.append({
                         "cache_idx": idx,
                         "result": result,
-                        "constituent_id": result.get("Constituent ID", ""),
+                        "constituent_id": "22-2934",
                         "branch": result.get("Branch", "Main")
                     })
+                    matched_cache_indices.add(idx)
                     found_exact = True
                     break
+                continue
 
-                if (cache_last == result_last and
-                    cache_date == result_date and
-                    cache_amount == result_amount):
+            if (cache_first == result_first and
+                cache_last == result_last and
+                cache_date == result_date and
+                cache_amount == result_amount):
 
-                    fuzzy_candidates.append({
-                        "cache_idx": idx,
-                        "cache_row": cache_row,
-                        "result": result
-                    })
-                    found_fuzzy = True
+                exact_matches.append({
+                    "cache_idx": idx,
+                    "result": result,
+                    "constituent_id": result.get("Constituent ID", ""),
+                    "branch": result.get("Branch", "Main")
+                })
+                matched_cache_indices.add(idx)
+                found_exact = True
+                break
 
-            if not found_exact and not found_fuzzy:
-                unmatched.append({"cache_idx": idx, "cache_row": cache_row})
+            if (cache_last == result_last and
+                cache_date == result_date and
+                cache_amount == result_amount):
 
+                fuzzy_candidates.append({
+                    "cache_idx": idx,
+                    "cache_row": cache_row,
+                    "result": result
+                })
+
+        _ = found_exact
+
+    today_str = date.today().strftime("%m/%d/%Y")
+    if not unmatched_cache.empty and "Date Added to Cache" in unmatched_cache.columns:
+        todays_unmatched = unmatched_cache[unmatched_cache["Date Added to Cache"] == today_str]
+    else:
+        todays_unmatched = pd.DataFrame()
+
+    still_unmatched = todays_unmatched[~todays_unmatched.index.isin(matched_cache_indices)]
+
+    if not exact_matches and not fuzzy_candidates and still_unmatched.empty:
+        st.info("No cache entries to match from query results")
+    else:
         if exact_matches:
             st.write(f"**Round 1 - Exact Matches:** {len(exact_matches)}")
             for match in exact_matches:
@@ -690,22 +695,22 @@ def render_part2():
                             st.session_state.cache_df.loc[candidate["cache_idx"], "Branch"] = manual_branch
                             st.rerun()
 
-        if unmatched:
-            st.write(f"**Round 3 - Unmatched:** {len(unmatched)}")
+        if not still_unmatched.empty:
+            st.write(f"**Round 3 - Unmatched (today's donors):** {len(still_unmatched)}")
 
-            for i, item in enumerate(unmatched):
+            for i, (idx, item) in enumerate(still_unmatched.iterrows()):
                 with st.expander(f"Unmatched donor {i + 1}"):
-                    st.write(f"Name: {item['cache_row'].get('First Name', '')} {item['cache_row'].get('Last Name', '')}")
-                    st.write(f"Company: {item['cache_row'].get('Company', '')}")
-                    st.write(f"Gift Date: {item['cache_row'].get('Gift Date', '')}")
-                    st.write(f"Amount: {item['cache_row'].get('Gift Amount', '')}")
+                    st.write(f"Name: {item.get('First Name', '')} {item.get('Last Name', '')}")
+                    st.write(f"Company: {item.get('Company', '')}")
+                    st.write(f"Gift Date: {item.get('Gift Date', '')}")
+                    st.write(f"Amount: {item.get('Gift Amount', '')}")
 
                     manual_id = st.text_input("Constituent ID:", key=f"unmatched_id_{i}")
                     manual_branch = st.selectbox("Branch:", ["Main", "WSlope", "Wyoming"], key=f"unmatched_branch_{i}")
 
                     if st.button("Save", key=f"save_unmatched_{i}") and manual_id:
-                        st.session_state.cache_df.loc[item["cache_idx"], "Constituent ID"] = manual_id
-                        st.session_state.cache_df.loc[item["cache_idx"], "Branch"] = manual_branch
+                        st.session_state.cache_df.loc[idx, "Constituent ID"] = manual_id
+                        st.session_state.cache_df.loc[idx, "Branch"] = manual_branch
                         st.rerun()
 
     st.subheader("Step 3: Process Companies")
