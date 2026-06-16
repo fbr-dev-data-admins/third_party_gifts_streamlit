@@ -188,7 +188,7 @@ class BenevitySource(BaseSource):
 
                     if (cache_first == first_name.lower() and
                         cache_last == last_name.lower() and
-                        cache_company == company and
+                        cache_company == self._company_id(company_config, company) and
                         cache_date == gift_date and
                         cache_amount == donor_amount):
 
@@ -199,7 +199,9 @@ class BenevitySource(BaseSource):
                             stale_cache_rows.add(len(company_rows))
                         break
 
-            if not is_anonymous and first_name and last_name:
+            if is_anonymous:
+                gift_reference = "matching gift for Anonymous"
+            elif first_name and last_name:
                 gift_reference = f"matching gift for {first_name.title()} {last_name.title()}"
             else:
                 gift_reference = self._build_gift_reference(company=self._company_re_name(company_config, company))
