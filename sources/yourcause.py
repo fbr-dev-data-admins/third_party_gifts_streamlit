@@ -144,10 +144,11 @@ class YourCauseSource(BaseSource):
             match_last = str(row.get("Match Donor Last Name", "")).lower() if pd.notna(row.get("Match Donor Last Name")) else ""
             match_email = str(row.get("Match Donor Email Address", "")).lower() if pd.notna(row.get("Match Donor Email Address")) else ""
 
-            soft_credit_id = ""
+            is_anonymous = not match_first and not match_last
+            soft_credit_id = "22-2934" if is_anonymous else ""
             branch = "Main"
 
-            if not cache_df.empty:
+            if not is_anonymous and not cache_df.empty:
                 for cache_idx in range(len(cache_df) - 1, -1, -1):
                     cache_row = cache_df.iloc[cache_idx]
 
@@ -158,7 +159,7 @@ class YourCauseSource(BaseSource):
 
                     if (cache_first == match_first and
                         cache_last == match_last and
-                        cache_company == company and
+                        cache_company == self._company_id(company_config, company) and
                         cache_email == match_email):
 
                         soft_credit_id = str(cache_row.get("Constituent ID", ""))
@@ -171,7 +172,9 @@ class YourCauseSource(BaseSource):
             display_first = str(row.get("Match Donor First Name", "")).title() if pd.notna(row.get("Match Donor First Name")) else ""
             display_last = str(row.get("Match Donor Last Name", "")).title() if pd.notna(row.get("Match Donor Last Name")) else ""
 
-            if display_first and display_last:
+            if is_anonymous:
+                gift_reference = "matching gift for Anonymous"
+            elif display_first and display_last:
                 gift_reference = f"matching gift for {display_first} {display_last}"
             else:
                 gift_reference = self._build_gift_reference(company=self._company_re_name(company_config, company))

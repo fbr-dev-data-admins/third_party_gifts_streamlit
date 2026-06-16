@@ -146,7 +146,7 @@ class BrightFundsSource(BaseSource):
 
                     if (cache_first == first.lower() and
                         cache_last == last.lower() and
-                        cache_company == company_name):
+                        cache_company == self._company_id(company_config, company_name)):
 
                         soft_credit_id = str(cache_row.get("Constituent ID", ""))
                         branch = str(cache_row.get("Branch", "Main")) or "Main"
@@ -156,7 +156,9 @@ class BrightFundsSource(BaseSource):
                         break
 
             first, middle, last = parse_full_name(on_behalf_of)
-            if not is_anonymous and first and last:
+            if is_anonymous:
+                gift_reference = "matching gift for Anonymous"
+            elif first and last:
                 gift_reference = f"matching gift for {first} {last}"
             else:
                 gift_reference = self._build_gift_reference(company=self._company_re_name(company_config, company_name))

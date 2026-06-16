@@ -130,10 +130,11 @@ class CyberGrantsSource(BaseSource):
             except (ValueError, TypeError):
                 donation_amount = 0
 
-            soft_credit_id = ""
+            is_anonymous = not first_name and not last_name
+            soft_credit_id = "22-2934" if is_anonymous else ""
             branch = "Main"
 
-            if not cache_df.empty:
+            if not is_anonymous and not cache_df.empty:
                 for cache_idx in range(len(cache_df) - 1, -1, -1):
                     cache_row = cache_df.iloc[cache_idx]
 
@@ -148,7 +149,7 @@ class CyberGrantsSource(BaseSource):
                         cache_amount = 0
 
                     if (cache_last == last_name and
-                        cache_company == company and
+                        cache_company == self._company_id(company_config, company) and
                         cache_amount == donation_amount):
 
                         soft_credit_id = str(cache_row.get("Constituent ID", ""))
@@ -167,7 +168,9 @@ class CyberGrantsSource(BaseSource):
             display_first = str(row.get("Donor First Name", "")).title() if pd.notna(row.get("Donor First Name")) else ""
             display_last = str(row.get("Donor Last Name", "")).title() if pd.notna(row.get("Donor Last Name")) else ""
 
-            if display_first and display_last:
+            if is_anonymous:
+                gift_reference = "matching gift for Anonymous"
+            elif display_first and display_last:
                 gift_reference = f"matching gift for {display_first} {display_last}"
             else:
                 gift_reference = self._build_gift_reference(company=self._company_re_name(company_config, company))
