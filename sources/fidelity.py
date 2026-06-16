@@ -149,10 +149,11 @@ class FidelitySource(BaseSource):
             original_donations = str(row.get("Original Donations (metadata)", "")) if pd.notna(row.get("Original Donations (metadata)")) else ""
             first, middle, last = parse_full_name(original_donations)
 
-            soft_credit_id = ""
+            is_anonymous = not first and not last
+            soft_credit_id = "22-2934" if is_anonymous else ""
             branch = "Main"
 
-            if first and last and not cache_df.empty:
+            if not is_anonymous and not cache_df.empty:
                 for cache_idx in range(len(cache_df) - 1, -1, -1):
                     cache_row = cache_df.iloc[cache_idx]
 
@@ -167,7 +168,9 @@ class FidelitySource(BaseSource):
                             stale_cache_rows.add(len(company_rows))
                         break
 
-            if first and last:
+            if is_anonymous:
+                gift_reference = "matching gift for Anonymous"
+            elif first and last:
                 gift_reference = f"matching gift for {first} {last}"
             else:
                 gift_reference = self._build_gift_reference(company=self._company_re_name(company_config, company_name))
