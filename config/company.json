@@ -946,5 +946,21 @@
   "HCA Healthcare": {
     "id": "20-161758",
     "re_name": "HCA HealthONE"
+  },
+  "Medtronic": {
+    "id": "20-180509",
+    "re_name": "Medtronic"
+  },
+  "Baker Hughes": {
+    "id": "136848",
+    "re_name": "Baker Hughes"
+  },
+  "Wells Fargo": {
+    "id": "31158",
+    "re_name": "Wells Fargo"
+  },
+  "Nasdaq": {
+    "id": "22-6815",
+    "re_name": "NASDAQ"
   }
 }
