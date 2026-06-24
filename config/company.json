@@ -962,5 +962,21 @@
   "Nasdaq": {
     "id": "22-6815",
     "re_name": "NASDAQ"
+  },
+  "Unum": {
+    "id": "Unum Group",
+    "re_name": "20-179918"
+  },
+  "U.S. Accenture": {
+    "id": "142701",
+    "re_name": "Accenture LLP"
+  },
+  "BD": {
+    "id": "23-2896",
+    "re_name": "BD"
+  },
+  "Nationwide": {
+    "id": "20-160241",
+    "re_name": "Nationwide"
   }
 }
