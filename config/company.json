@@ -998,5 +998,25 @@
   "Tapestry": {
     "id": "23-3957",
     "re_name": "Tapestry"
+  },
+  "ServiceNow, Inc.": {
+    "id": "22-7303",
+    "re_name": "ServiceNow"
+  },
+  "Blackbaud": {
+    "id": "21-6839",
+    "re_name": "Blackbaud"
+  },
+  "City National Bank": {
+    "id": "23-3573",
+    "re_name": "City National Bank"
+  },
+  "PwC US and Mexico": {
+    "id": "2307",
+    "re_name": "Price Waterhouse Coopers"
+  },
+  "BBGF  (GC Only)": {
+    "id": "21-6839",
+    "re_name": "Blackbaud"
   }
 }
