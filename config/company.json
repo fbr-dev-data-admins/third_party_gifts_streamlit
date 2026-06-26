@@ -986,5 +986,17 @@
   "RiverStone Resources": {
     "id": "23-9228",
     "re_name": "RiverStone Resources"
+  },
+  "GOLDMAN SACHS": {
+    "id": "20-174839",
+    "re_name": "Goldman Sachs"
+  },
+  "BANK OF AMERICA": {
+    "id": "73605",
+    "re_name": "Bank of America"
+  },
+  "Tapestry": {
+    "id": "23-3957",
+    "re_name": "Tapestry"
   }
 }
