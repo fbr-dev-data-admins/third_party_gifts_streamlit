@@ -673,6 +673,14 @@ def render_part2():
     fuzzy_candidates = []
     matched_cache_indices = set()
 
+    for idx, cache_row in unmatched_cache.iterrows():
+        cache_first = str(cache_row.get("First Name", "")).strip()
+        cache_last = str(cache_row.get("Last Name", "")).strip()
+        if not cache_first and not cache_last:
+            st.session_state.cache_df.loc[idx, "Constituent ID"] = "22-2934"
+            st.session_state.cache_df.loc[idx, "Branch"] = "Main"
+            matched_cache_indices.add(idx)
+
     for result in query_results:
         sc_id = result.get("SC Constituent ID", "")
         is_company_sc = sc_id in company_ids
