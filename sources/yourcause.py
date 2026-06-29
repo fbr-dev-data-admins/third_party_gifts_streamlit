@@ -179,6 +179,9 @@ class YourCauseSource(BaseSource):
                 gift_reference = "matching gift for Anonymous"
             elif display_first and display_last:
                 gift_reference = f"matching gift for {display_first} {display_last}"
+            elif not soft_credit_id and (display_first or display_last):
+                name = " ".join(p for p in [display_first, display_last] if p)
+                gift_reference = f"matching gift for {name}"
             else:
                 gift_reference = self._build_gift_reference(company=self._company_re_name(company_config, company))
 
