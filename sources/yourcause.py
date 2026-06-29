@@ -37,7 +37,8 @@ class YourCauseSource(BaseSource):
     def transform_part1(
         self,
         df: pd.DataFrame,
-        company_config: dict
+        company_config: dict,
+        pass_through_agents: dict = None
     ) -> tuple[pd.DataFrame, pd.DataFrame, set, set]:
         """Transform YourCause data for Part 1 import (Individual donations)."""
         gl_post_date = format_gl_post_date()
@@ -90,13 +91,14 @@ class YourCauseSource(BaseSource):
                 "Gift Reference": gift_reference,
                 "Soft Credit Company ID": self._company_id(company_config, company),
                 "Soft Credit Entity ID": self.entity_constituent_id,
+                "Soft Credit Entity ID 2": "",
                 "First Name": "" if is_anonymous else first_name.title(),
                 "Middle Name": "",
                 "Last Name": "" if is_anonymous else last_name.title(),
                 "Address": "" if is_anonymous else address,
                 "City": "" if is_anonymous else (str(row.get("Donor City", "")) if pd.notna(row.get("Donor City")) else ""),
                 "State": "" if is_anonymous else (str(row.get("Donor State/Province/Region", "")) if pd.notna(row.get("Donor State/Province/Region")) else ""),
-                "ZIP": "" if is_anonymous else (str(row.get("Donor Postal Code", "")) if pd.notna(row.get("Donor Postal Code")) else ""),
+                "ZIP": "" if is_anonymous else self._clean_zip(row.get("Donor Postal Code")),
                 "Country": (
                     "" if is_anonymous else (
                         ("United States" if donor_country.upper() == "US" else donor_country)
