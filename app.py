@@ -55,6 +55,7 @@ def init_session_state():
         "uploaded_files": {},
         "file_sources": {},
         "company_config": {},
+        "pass_through_agents_config": {},
         "cache_df": pd.DataFrame(),
         "part1_complete": False,
         "part1_result": None,
@@ -68,6 +69,7 @@ def init_session_state():
         "part2_result": None,
         "part2_stale_cache_rows": set(),
         "missing_companies": {},
+        "missing_pass_through_agents": {},
         "use_github": True,
     }
     for key, value in defaults.items():
@@ -85,6 +87,12 @@ def load_configs():
             st.session_state.company_config = load_json_from_github(
                 config_repo, "config/company.json", token
             )
+            try:
+                st.session_state.pass_through_agents_config = load_json_from_github(
+                    config_repo, "config/pass_through_agents.json", token
+                )
+            except Exception:
+                st.session_state.pass_through_agents_config = {}
         except Exception as e:
             st.warning(f"Could not load configs from GitHub: {e}. Using local files.")
             st.session_state.use_github = False
@@ -99,6 +107,11 @@ def load_local_configs():
         st.session_state.company_config = load_local_json("config/company.json")
     except FileNotFoundError:
         st.session_state.company_config = {}
+
+    try:
+        st.session_state.pass_through_agents_config = load_local_json("config/pass_through_agents.json")
+    except FileNotFoundError:
+        st.session_state.pass_through_agents_config = {}
 
 
 def get_file_hash(content: bytes) -> str:
@@ -351,6 +364,83 @@ def render_company_validation():
     return False
 
 
+def check_missing_pass_through_agents() -> dict[str, str]:
+    """Check for pass-through agents not in pass_through_agents.json and return them."""
+    missing = {}
+
+    for file_hash, source_name in st.session_state.file_sources.items():
+        if source_name not in SOURCE_REGISTRY:
+            continue
+
+        file_info = st.session_state.uploaded_files[file_hash]
+        source_class = SOURCE_REGISTRY[source_name]
+        source = source_class()
+        df = source.read_file(file_info["content"])
+        agents = source.get_pass_through_agents(df)
+
+        for agent in agents:
+            if agent and agent not in st.session_state.pass_through_agents_config:
+                missing[agent] = ""
+
+    return missing
+
+
+def render_pass_through_agent_validation():
+    """Render pass-through agent validation section."""
+    missing = check_missing_pass_through_agents()
+
+    if not missing:
+        return True
+
+    st.warning(f"Found {len(missing)} unrecognized CyberGrants pass-through agents:")
+
+    st.session_state.missing_pass_through_agents = missing
+
+    with st.form("pass_through_agent_form"):
+        for agent in missing:
+            st.session_state.missing_pass_through_agents[agent] = st.text_input(
+                f"RE Constituent ID for pass-through agent '{agent}':",
+                key=f"agent_id_{agent}"
+            )
+
+        if st.form_submit_button("Save Pass-through Agent Mappings"):
+            all_filled = all(
+                v.strip()
+                for v in st.session_state.missing_pass_through_agents.values()
+            )
+
+            if not all_filled:
+                st.error("Please fill in all pass-through agent Constituent IDs")
+                return False
+
+            for agent, constituent_id in st.session_state.missing_pass_through_agents.items():
+                st.session_state.pass_through_agents_config[agent] = constituent_id.strip()
+
+            if st.session_state.use_github:
+                try:
+                    config_repo = get_secret("github.config_repo")
+                    token = get_secret("github.access_token")
+                    save_json_to_github(
+                        config_repo,
+                        "config/pass_through_agents.json",
+                        st.session_state.pass_through_agents_config,
+                        token,
+                        f"Add pass-through agent mappings: {', '.join(st.session_state.missing_pass_through_agents.keys())}"
+                    )
+                    st.success("Pass-through agent mappings saved to GitHub")
+                except Exception as e:
+                    st.error(f"Failed to save to GitHub: {e}")
+                    return False
+            else:
+                save_local_json("config/pass_through_agents.json", st.session_state.pass_through_agents_config)
+                st.success("Pass-through agent mappings saved locally")
+
+            st.session_state.missing_pass_through_agents = {}
+            st.rerun()
+
+    return False
+
+
 def process_part1():
     """Process Part 1 - Individuals."""
     all_unified = []
@@ -371,7 +461,8 @@ def process_part1():
 
         unified_df, grants_df, benevity_rows, benevity_reason_rows = source.transform_part1(
             df,
-            st.session_state.company_config
+            st.session_state.company_config,
+            st.session_state.pass_through_agents_config
         )
 
         if not unified_df.empty:
@@ -419,6 +510,11 @@ def render_part1():
     companies_valid = render_company_validation()
 
     if not companies_valid:
+        return
+
+    agents_valid = render_pass_through_agent_validation()
+
+    if not agents_valid:
         return
 
     st.subheader("Step 4: Process")
