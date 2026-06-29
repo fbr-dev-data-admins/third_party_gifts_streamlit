@@ -66,7 +66,8 @@ class BaseSource(ABC):
         self,
         df: pd.DataFrame,
         company_config: dict,
-        cache_df: pd.DataFrame
+        cache_df: pd.DataFrame,
+        pass_through_agents: dict = None
     ) -> tuple[pd.DataFrame, set]:
         """
         Transform source data for Part 2 (Companies) import.
