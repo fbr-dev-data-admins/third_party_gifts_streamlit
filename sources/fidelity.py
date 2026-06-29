@@ -119,7 +119,8 @@ class FidelitySource(BaseSource):
         self,
         df: pd.DataFrame,
         company_config: dict,
-        cache_df: pd.DataFrame
+        cache_df: pd.DataFrame,
+        pass_through_agents: dict = None
     ) -> tuple[pd.DataFrame, set]:
         """Transform Fidelity data for Part 2 (Company/Matching Gift donations)."""
         gl_post_date = format_gl_post_date()
@@ -188,6 +189,7 @@ class FidelitySource(BaseSource):
                 "Gift Reference": gift_reference,
                 "Soft Credit Individual ID": soft_credit_id,
                 "Soft Credit Entity ID": self.entity_constituent_id,
+                "Soft Credit Entity ID 2": "",
             }
 
             company_rows.append(output_row)
