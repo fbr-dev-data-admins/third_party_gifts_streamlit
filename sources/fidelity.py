@@ -42,7 +42,8 @@ class FidelitySource(BaseSource):
     def transform_part1(
         self,
         df: pd.DataFrame,
-        company_config: dict
+        company_config: dict,
+        pass_through_agents: dict = None
     ) -> tuple[pd.DataFrame, pd.DataFrame, set, set]:
         """Transform Fidelity data for Part 1 import (Individual donations)."""
         gl_post_date = format_gl_post_date()
@@ -94,6 +95,7 @@ class FidelitySource(BaseSource):
                 "Gift Reference": gift_reference,
                 "Soft Credit Company ID": "",
                 "Soft Credit Entity ID": self.entity_constituent_id,
+                "Soft Credit Entity ID 2": "",
                 "First Name": first_name,
                 "Middle Name": middle_name,
                 "Last Name": last_name,
