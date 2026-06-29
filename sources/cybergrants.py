@@ -72,8 +72,18 @@ class CyberGrantsSource(BaseSource):
             agent_name = str(row.get("Pass-through Agent", "")).strip() if pd.notna(row.get("Pass-through Agent")) else ""
             entity_id_2 = pass_through_agents.get(agent_name, "") if agent_name else ""
 
+            raw_first = str(row.get("Donor First Name", "")).strip() if pd.notna(row.get("Donor First Name")) else ""
+            raw_last = str(row.get("Donor Last Name", "")).strip() if pd.notna(row.get("Donor Last Name")) else ""
+
+            is_anonymous = not raw_first and not raw_last
+
+            if not is_anonymous and raw_first and not raw_last and " " in raw_first:
+                parts = raw_first.split(" ", 1)
+                raw_first = parts[0]
+                raw_last = parts[1]
+
             output_row = {
-                "RE Constituent ID": "",
+                "RE Constituent ID": "22-2934" if is_anonymous else "",
                 "Gift Date": gift_date,
                 "GL Post Date": gl_post_date,
                 "Gift Amount": row.get("Donation Amount", 0),
@@ -85,14 +95,14 @@ class CyberGrantsSource(BaseSource):
                 "Soft Credit Company ID": self._company_id(company_config, company),
                 "Soft Credit Entity ID": self.entity_constituent_id,
                 "Soft Credit Entity ID 2": entity_id_2,
-                "First Name": str(row.get("Donor First Name", "")).title() if pd.notna(row.get("Donor First Name")) else "",
+                "First Name": "" if is_anonymous else raw_first.title(),
                 "Middle Name": "",
-                "Last Name": str(row.get("Donor Last Name", "")).title() if pd.notna(row.get("Donor Last Name")) else "",
-                "Address": str(row.get("Donor Address", "")) if pd.notna(row.get("Donor Address")) else "",
-                "City": str(row.get("Donor City", "")) if pd.notna(row.get("Donor City")) else "",
-                "State": str(row.get("Donor State", "")) if pd.notna(row.get("Donor State")) else "",
-                "ZIP": self._clean_zip(row.get("Donor ZIP/Postal Code")),
-                "Country": (
+                "Last Name": "" if is_anonymous else raw_last.title(),
+                "Address": "" if is_anonymous else (str(row.get("Donor Address", "")) if pd.notna(row.get("Donor Address")) else ""),
+                "City": "" if is_anonymous else (str(row.get("Donor City", "")) if pd.notna(row.get("Donor City")) else ""),
+                "State": "" if is_anonymous else (str(row.get("Donor State", "")) if pd.notna(row.get("Donor State")) else ""),
+                "ZIP": "" if is_anonymous else self._clean_zip(row.get("Donor ZIP/Postal Code")),
+                "Country": "" if is_anonymous else (
                     (
                         ("United States" if str(row.get("Country", "")).upper() == "US" else str(row.get("Country", "")))
                         if str(row.get("Country", "")).strip() not in ["", "Not shared by donor", "nan"] else (
@@ -105,8 +115,8 @@ class CyberGrantsSource(BaseSource):
                         )
                     )
                 ),
-                "Primary Phone": str(row.get("Donor Telephone", "")) if pd.notna(row.get("Donor Telephone")) else "",
-                "Email": str(row.get("Donor Email Address", "")) if pd.notna(row.get("Donor Email Address")) else "",
+                "Primary Phone": "" if is_anonymous else (str(row.get("Donor Telephone", "")) if pd.notna(row.get("Donor Telephone")) else ""),
+                "Email": "" if is_anonymous else (str(row.get("Donor Email Address", "")) if pd.notna(row.get("Donor Email Address")) else ""),
             }
 
             unified_rows.append(output_row)
