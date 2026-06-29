@@ -120,19 +120,22 @@ class CyberGrantsSource(BaseSource):
         self,
         df: pd.DataFrame,
         company_config: dict,
-        cache_df: pd.DataFrame
+        cache_df: pd.DataFrame,
+        pass_through_agents: dict = None
     ) -> tuple[pd.DataFrame, set]:
         """Transform CyberGrants data for Part 2 (company donations)."""
         gl_post_date = format_gl_post_date()
         today_str = date.today().strftime("%m/%d/%Y")
         company_rows = []
         stale_cache_rows = set()
+        pass_through_agents = pass_through_agents or {}
 
         company_df = df[df["Payment Funding Source"].str.lower() == "company"] if "Payment Funding Source" in df.columns else pd.DataFrame()
 
         for _, row in company_df.iterrows():
             company = str(row.get("Company Name", "")) if pd.notna(row.get("Company Name")) else ""
             gift_date = format_date(row.get("Donation Start Date"))
+            agent_name = str(row.get("Pass-through Agent", "")).strip() if pd.notna(row.get("Pass-through Agent")) else ""
 
             first_name = str(row.get("Donor First Name", "")).lower() if pd.notna(row.get("Donor First Name")) else ""
             last_name = str(row.get("Donor Last Name", "")).lower() if pd.notna(row.get("Donor Last Name")) else ""
@@ -199,6 +202,7 @@ class CyberGrantsSource(BaseSource):
                 "Gift Reference": gift_reference,
                 "Soft Credit Individual ID": soft_credit_id,
                 "Soft Credit Entity ID": self.entity_constituent_id,
+                "Soft Credit Entity ID 2": pass_through_agents.get(agent_name, "") if agent_name else "",
             }
 
             company_rows.append(output_row)
