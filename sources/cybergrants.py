@@ -35,14 +35,23 @@ class CyberGrantsSource(BaseSource):
             return set(df["Company Name"].dropna().unique())
         return set()
 
+    def get_pass_through_agents(self, df: pd.DataFrame) -> set:
+        """Get unique non-blank Pass-through Agent names."""
+        if "Pass-through Agent" in df.columns:
+            agents = df["Pass-through Agent"].dropna()
+            return set(a for a in agents.unique() if str(a).strip())
+        return set()
+
     def transform_part1(
         self,
         df: pd.DataFrame,
-        company_config: dict
+        company_config: dict,
+        pass_through_agents: dict = None
     ) -> tuple[pd.DataFrame, pd.DataFrame, set, set]:
         """Transform CyberGrants data for Part 1 import (employee donations)."""
         gl_post_date = format_gl_post_date()
         unified_rows = []
+        pass_through_agents = pass_through_agents or {}
 
         employee_df = df[df["Payment Funding Source"].str.lower() == "employee"] if "Payment Funding Source" in df.columns else df
 
@@ -60,6 +69,9 @@ class CyberGrantsSource(BaseSource):
             if not country:
                 country = "United States"
 
+            agent_name = str(row.get("Pass-through Agent", "")).strip() if pd.notna(row.get("Pass-through Agent")) else ""
+            entity_id_2 = pass_through_agents.get(agent_name, "") if agent_name else ""
+
             output_row = {
                 "RE Constituent ID": "",
                 "Gift Date": gift_date,
@@ -72,13 +84,14 @@ class CyberGrantsSource(BaseSource):
                 "Gift Reference": gift_reference,
                 "Soft Credit Company ID": self._company_id(company_config, company),
                 "Soft Credit Entity ID": self.entity_constituent_id,
+                "Soft Credit Entity ID 2": entity_id_2,
                 "First Name": str(row.get("Donor First Name", "")).title() if pd.notna(row.get("Donor First Name")) else "",
                 "Middle Name": "",
                 "Last Name": str(row.get("Donor Last Name", "")).title() if pd.notna(row.get("Donor Last Name")) else "",
                 "Address": str(row.get("Donor Address", "")) if pd.notna(row.get("Donor Address")) else "",
                 "City": str(row.get("Donor City", "")) if pd.notna(row.get("Donor City")) else "",
                 "State": str(row.get("Donor State", "")) if pd.notna(row.get("Donor State")) else "",
-                "ZIP": str(row.get("Donor ZIP/Postal Code", "")) if pd.notna(row.get("Donor ZIP/Postal Code")) else "",
+                "ZIP": self._clean_zip(row.get("Donor ZIP/Postal Code")),
                 "Country": (
                     (
                         ("United States" if str(row.get("Country", "")).upper() == "US" else str(row.get("Country", "")))
