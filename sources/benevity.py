@@ -206,6 +206,9 @@ class BenevitySource(BaseSource):
                 gift_reference = "matching gift for Anonymous"
             elif first_name and last_name:
                 gift_reference = f"matching gift for {first_name.title()} {last_name.title()}"
+            elif not soft_credit_id and (first_name or last_name):
+                name = " ".join(p.title() for p in [first_name, last_name] if p)
+                gift_reference = f"matching gift for {name}"
             else:
                 gift_reference = self._build_gift_reference(company=self._company_re_name(company_config, company))
 
