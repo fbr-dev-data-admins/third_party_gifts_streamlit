@@ -147,8 +147,8 @@ class CyberGrantsSource(BaseSource):
             gift_date = format_date(row.get("Donation Start Date"))
             agent_name = str(row.get("Pass-through Agent", "")).strip() if pd.notna(row.get("Pass-through Agent")) else ""
 
-            first_name = str(row.get("Donor First Name", "")).lower() if pd.notna(row.get("Donor First Name")) else ""
-            last_name = str(row.get("Donor Last Name", "")).lower() if pd.notna(row.get("Donor Last Name")) else ""
+            first_name = str(row.get("Donor First Name", "")).strip() if pd.notna(row.get("Donor First Name")) else ""
+            last_name = str(row.get("Donor Last Name", "")).strip() if pd.notna(row.get("Donor Last Name")) else ""
             donation_amount = row.get("Donation Amount", 0)
 
             try:
@@ -157,6 +157,12 @@ class CyberGrantsSource(BaseSource):
                 donation_amount = 0
 
             is_anonymous = not first_name and not last_name
+
+            if not is_anonymous and first_name and not last_name and " " in first_name:
+                parts = first_name.split(" ", 1)
+                first_name = parts[0]
+                last_name = parts[1]
+
             soft_credit_id = "22-2934" if is_anonymous else ""
             branch = "Main"
 
@@ -174,7 +180,7 @@ class CyberGrantsSource(BaseSource):
                     except (ValueError, TypeError):
                         cache_amount = 0
 
-                    if (cache_last == last_name and
+                    if (cache_last == last_name.lower() and
                         cache_company == self._company_id(company_config, company) and
                         cache_amount == donation_amount):
 
@@ -191,13 +197,10 @@ class CyberGrantsSource(BaseSource):
             except (ValueError, TypeError):
                 match_amount = 0
 
-            display_first = str(row.get("Donor First Name", "")).title() if pd.notna(row.get("Donor First Name")) else ""
-            display_last = str(row.get("Donor Last Name", "")).title() if pd.notna(row.get("Donor Last Name")) else ""
-
             if is_anonymous:
                 gift_reference = "matching gift for Anonymous"
-            elif display_first and display_last:
-                gift_reference = f"matching gift for {display_first} {display_last}"
+            elif first_name and last_name:
+                gift_reference = f"matching gift for {first_name.title()} {last_name.title()}"
             else:
                 gift_reference = self._build_gift_reference(company=self._company_re_name(company_config, company))
 
