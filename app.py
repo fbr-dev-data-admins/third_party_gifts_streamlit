@@ -829,7 +829,8 @@ def render_part2():
                 company_df, stale_rows = source.transform_part2(
                     df,
                     st.session_state.company_config,
-                    st.session_state.cache_df
+                    st.session_state.cache_df,
+                    st.session_state.pass_through_agents_config
                 )
 
                 if not company_df.empty:
