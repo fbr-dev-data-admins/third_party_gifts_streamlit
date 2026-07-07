@@ -675,8 +675,6 @@ def render_part2():
     seen_fuzzy_keys = set()
 
     for idx, cache_row in unmatched_cache.iterrows():
-
-    for idx, cache_row in unmatched_cache.iterrows():
         cache_first = str(cache_row.get("First Name", "")).strip()
         cache_last = str(cache_row.get("Last Name", "")).strip()
         if not cache_first and not cache_last:
