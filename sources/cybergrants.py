@@ -35,14 +35,23 @@ class CyberGrantsSource(BaseSource):
             return set(df["Company Name"].dropna().unique())
         return set()
 
+    def get_pass_through_agents(self, df: pd.DataFrame) -> set:
+        """Get unique non-blank Pass-through Agent names."""
+        if "Pass-through Agent" in df.columns:
+            agents = df["Pass-through Agent"].dropna()
+            return set(a for a in agents.unique() if str(a).strip())
+        return set()
+
     def transform_part1(
         self,
         df: pd.DataFrame,
-        company_config: dict
+        company_config: dict,
+        pass_through_agents: dict = None
     ) -> tuple[pd.DataFrame, pd.DataFrame, set, set]:
         """Transform CyberGrants data for Part 1 import (employee donations)."""
         gl_post_date = format_gl_post_date()
         unified_rows = []
+        pass_through_agents = pass_through_agents or {}
 
         employee_df = df[df["Payment Funding Source"].str.lower() == "employee"] if "Payment Funding Source" in df.columns else df
 
@@ -60,8 +69,21 @@ class CyberGrantsSource(BaseSource):
             if not country:
                 country = "United States"
 
+            agent_name = str(row.get("Pass-through Agent", "")).strip() if pd.notna(row.get("Pass-through Agent")) else ""
+            entity_id_2 = pass_through_agents.get(agent_name, "") if agent_name else ""
+
+            raw_first = str(row.get("Donor First Name", "")).strip() if pd.notna(row.get("Donor First Name")) else ""
+            raw_last = str(row.get("Donor Last Name", "")).strip() if pd.notna(row.get("Donor Last Name")) else ""
+
+            is_anonymous = not raw_first and not raw_last
+
+            if not is_anonymous and raw_first and not raw_last and " " in raw_first:
+                parts = raw_first.split(" ", 1)
+                raw_first = parts[0]
+                raw_last = parts[1]
+
             output_row = {
-                "RE Constituent ID": "",
+                "RE Constituent ID": "22-2934" if is_anonymous else "",
                 "Gift Date": gift_date,
                 "GL Post Date": gl_post_date,
                 "Gift Amount": row.get("Donation Amount", 0),
@@ -72,14 +94,15 @@ class CyberGrantsSource(BaseSource):
                 "Gift Reference": gift_reference,
                 "Soft Credit Company ID": self._company_id(company_config, company),
                 "Soft Credit Entity ID": self.entity_constituent_id,
-                "First Name": str(row.get("Donor First Name", "")).title() if pd.notna(row.get("Donor First Name")) else "",
+                "Soft Credit Entity ID 2": entity_id_2,
+                "First Name": "" if is_anonymous else raw_first.title(),
                 "Middle Name": "",
-                "Last Name": str(row.get("Donor Last Name", "")).title() if pd.notna(row.get("Donor Last Name")) else "",
-                "Address": str(row.get("Donor Address", "")) if pd.notna(row.get("Donor Address")) else "",
-                "City": str(row.get("Donor City", "")) if pd.notna(row.get("Donor City")) else "",
-                "State": str(row.get("Donor State", "")) if pd.notna(row.get("Donor State")) else "",
-                "ZIP": str(row.get("Donor ZIP/Postal Code", "")) if pd.notna(row.get("Donor ZIP/Postal Code")) else "",
-                "Country": (
+                "Last Name": "" if is_anonymous else raw_last.title(),
+                "Address": "" if is_anonymous else (str(row.get("Donor Address", "")) if pd.notna(row.get("Donor Address")) else ""),
+                "City": "" if is_anonymous else (str(row.get("Donor City", "")) if pd.notna(row.get("Donor City")) else ""),
+                "State": "" if is_anonymous else (str(row.get("Donor State", "")) if pd.notna(row.get("Donor State")) else ""),
+                "ZIP": "" if is_anonymous else self._clean_zip(row.get("Donor ZIP/Postal Code")),
+                "Country": "" if is_anonymous else (
                     (
                         ("United States" if str(row.get("Country", "")).upper() == "US" else str(row.get("Country", "")))
                         if str(row.get("Country", "")).strip() not in ["", "Not shared by donor", "nan"] else (
@@ -92,8 +115,8 @@ class CyberGrantsSource(BaseSource):
                         )
                     )
                 ),
-                "Primary Phone": str(row.get("Donor Telephone", "")) if pd.notna(row.get("Donor Telephone")) else "",
-                "Email": str(row.get("Donor Email Address", "")) if pd.notna(row.get("Donor Email Address")) else "",
+                "Primary Phone": "" if is_anonymous else (str(row.get("Donor Telephone", "")) if pd.notna(row.get("Donor Telephone")) else ""),
+                "Email": "" if is_anonymous else (str(row.get("Donor Email Address", "")) if pd.notna(row.get("Donor Email Address")) else ""),
             }
 
             unified_rows.append(output_row)
@@ -107,22 +130,25 @@ class CyberGrantsSource(BaseSource):
         self,
         df: pd.DataFrame,
         company_config: dict,
-        cache_df: pd.DataFrame
+        cache_df: pd.DataFrame,
+        pass_through_agents: dict = None
     ) -> tuple[pd.DataFrame, set]:
         """Transform CyberGrants data for Part 2 (company donations)."""
         gl_post_date = format_gl_post_date()
         today_str = date.today().strftime("%m/%d/%Y")
         company_rows = []
         stale_cache_rows = set()
+        pass_through_agents = pass_through_agents or {}
 
         company_df = df[df["Payment Funding Source"].str.lower() == "company"] if "Payment Funding Source" in df.columns else pd.DataFrame()
 
         for _, row in company_df.iterrows():
             company = str(row.get("Company Name", "")) if pd.notna(row.get("Company Name")) else ""
             gift_date = format_date(row.get("Donation Start Date"))
+            agent_name = str(row.get("Pass-through Agent", "")).strip() if pd.notna(row.get("Pass-through Agent")) else ""
 
-            first_name = str(row.get("Donor First Name", "")).lower() if pd.notna(row.get("Donor First Name")) else ""
-            last_name = str(row.get("Donor Last Name", "")).lower() if pd.notna(row.get("Donor Last Name")) else ""
+            first_name = str(row.get("Donor First Name", "")).strip() if pd.notna(row.get("Donor First Name")) else ""
+            last_name = str(row.get("Donor Last Name", "")).strip() if pd.notna(row.get("Donor Last Name")) else ""
             donation_amount = row.get("Donation Amount", 0)
 
             try:
@@ -131,6 +157,12 @@ class CyberGrantsSource(BaseSource):
                 donation_amount = 0
 
             is_anonymous = not first_name and not last_name
+
+            if not is_anonymous and first_name and not last_name and " " in first_name:
+                parts = first_name.split(" ", 1)
+                first_name = parts[0]
+                last_name = parts[1]
+
             soft_credit_id = "22-2934" if is_anonymous else ""
             branch = "Main"
 
@@ -148,7 +180,7 @@ class CyberGrantsSource(BaseSource):
                     except (ValueError, TypeError):
                         cache_amount = 0
 
-                    if (cache_last == last_name and
+                    if (cache_last == last_name.lower() and
                         cache_company == self._company_id(company_config, company) and
                         cache_amount == donation_amount):
 
@@ -165,13 +197,13 @@ class CyberGrantsSource(BaseSource):
             except (ValueError, TypeError):
                 match_amount = 0
 
-            display_first = str(row.get("Donor First Name", "")).title() if pd.notna(row.get("Donor First Name")) else ""
-            display_last = str(row.get("Donor Last Name", "")).title() if pd.notna(row.get("Donor Last Name")) else ""
-
             if is_anonymous:
                 gift_reference = "matching gift for Anonymous"
-            elif display_first and display_last:
-                gift_reference = f"matching gift for {display_first} {display_last}"
+            elif first_name and last_name:
+                gift_reference = f"matching gift for {first_name.title()} {last_name.title()}"
+            elif not soft_credit_id and (first_name or last_name):
+                name = " ".join(p.title() for p in [first_name, last_name] if p)
+                gift_reference = f"matching gift for {name}"
             else:
                 gift_reference = self._build_gift_reference(company=self._company_re_name(company_config, company))
 
@@ -186,6 +218,7 @@ class CyberGrantsSource(BaseSource):
                 "Gift Reference": gift_reference,
                 "Soft Credit Individual ID": soft_credit_id,
                 "Soft Credit Entity ID": self.entity_constituent_id,
+                "Soft Credit Entity ID 2": pass_through_agents.get(agent_name, "") if agent_name else "",
             }
 
             company_rows.append(output_row)

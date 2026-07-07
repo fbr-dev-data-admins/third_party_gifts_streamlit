@@ -41,7 +41,8 @@ class BenevitySource(BaseSource):
     def transform_part1(
         self,
         df: pd.DataFrame,
-        company_config: dict
+        company_config: dict,
+        pass_through_agents: dict = None
     ) -> tuple[pd.DataFrame, pd.DataFrame, set, set]:
         """Transform Benevity data for Part 1 import."""
         gl_post_date = format_gl_post_date()
@@ -72,7 +73,7 @@ class BenevitySource(BaseSource):
             if comment:
                 gift_ref_parts.append(comment)
 
-            if reason and reason not in ["User Donation", ""]:
+            if reason and reason not in ["User Donation", "User Portfolio Donation", "Anonymous Donation", "Match", ""]:
                 gift_ref_parts.append(reason)
 
             gift_reference = self._build_gift_reference(*gift_ref_parts, company=self._company_re_name(company_config, company))
@@ -100,13 +101,14 @@ class BenevitySource(BaseSource):
                 "Gift Reference": gift_reference,
                 "Soft Credit Company ID": self._company_id(company_config, company),
                 "Soft Credit Entity ID": self.entity_constituent_id,
+                "Soft Credit Entity ID 2": "",
                 "First Name": "" if is_anonymous else str(first_name).title() if pd.notna(first_name) else "",
                 "Middle Name": "",
                 "Last Name": "" if is_anonymous else str(last_name).title() if pd.notna(last_name) else "",
                 "Address": "" if is_anonymous else (str(row.get("Address", "")) if pd.notna(row.get("Address")) and str(row.get("Address")) != "Not shared by donor" else ""),
                 "City": "" if is_anonymous else (str(row.get("City", "")) if pd.notna(row.get("City")) and str(row.get("City")) != "Not shared by donor" else ""),
                 "State": "" if is_anonymous else (str(row.get("State/Province", "")) if pd.notna(row.get("State/Province")) and str(row.get("State/Province")) != "Not shared by donor" else ""),
-                "ZIP": "" if is_anonymous else (str(row.get("Postal Code", "")) if pd.notna(row.get("Postal Code")) and str(row.get("Postal Code")) != "Not shared by donor" else ""),
+                "ZIP": "" if is_anonymous else (self._clean_zip(row.get("Postal Code")) if pd.notna(row.get("Postal Code")) and str(row.get("Postal Code")) != "Not shared by donor" else ""),
                 "Country": "" if is_anonymous else ("United States" if any([
                     str(row.get("Address", "")) not in ["", "Not shared by donor", "nan"],
                     str(row.get("City", "")) not in ["", "Not shared by donor", "nan"],
@@ -136,7 +138,8 @@ class BenevitySource(BaseSource):
         self,
         df: pd.DataFrame,
         company_config: dict,
-        cache_df: pd.DataFrame
+        cache_df: pd.DataFrame,
+        pass_through_agents: dict = None
     ) -> tuple[pd.DataFrame, set]:
         """Transform Benevity data for Part 2 (Companies) import."""
         gl_post_date = format_gl_post_date()
@@ -203,6 +206,9 @@ class BenevitySource(BaseSource):
                 gift_reference = "matching gift for Anonymous"
             elif first_name and last_name:
                 gift_reference = f"matching gift for {first_name.title()} {last_name.title()}"
+            elif not soft_credit_id and (first_name or last_name):
+                name = " ".join(p.title() for p in [first_name, last_name] if p)
+                gift_reference = f"matching gift for {name}"
             else:
                 gift_reference = self._build_gift_reference(company=self._company_re_name(company_config, company))
 
@@ -217,6 +223,7 @@ class BenevitySource(BaseSource):
                 "Gift Reference": gift_reference,
                 "Soft Credit Individual ID": soft_credit_id,
                 "Soft Credit Entity ID": self.entity_constituent_id,
+                "Soft Credit Entity ID 2": "",
             }
 
             company_rows.append(output_row)

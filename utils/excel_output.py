@@ -60,6 +60,11 @@ def create_import_excel(
     last_name_col_idx = columns.index("Last Name") + 1 if "Last Name" in columns else None
     constituent_id_col_idx = columns.index("Constituent ID") + 1 if "Constituent ID" in columns else None
 
+    if zip_col_idx:
+        for row_idx in range(2, len(df) + 2):
+            cell = ws.cell(row=row_idx, column=zip_col_idx)
+            cell.number_format = "@"
+
     if state_col_idx and zip_col_idx:
         state_col = get_column_letter(state_col_idx)
         zip_col = get_column_letter(zip_col_idx)

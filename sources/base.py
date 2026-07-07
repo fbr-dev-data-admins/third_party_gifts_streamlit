@@ -42,7 +42,8 @@ class BaseSource(ABC):
     def transform_part1(
         self,
         df: pd.DataFrame,
-        company_config: dict
+        company_config: dict,
+        pass_through_agents: dict = None
     ) -> tuple[pd.DataFrame, pd.DataFrame, set, set]:
         """
         Transform source data for Part 1 (Individuals) import.
@@ -65,7 +66,8 @@ class BaseSource(ABC):
         self,
         df: pd.DataFrame,
         company_config: dict,
-        cache_df: pd.DataFrame
+        cache_df: pd.DataFrame,
+        pass_through_agents: dict = None
     ) -> tuple[pd.DataFrame, set]:
         """
         Transform source data for Part 2 (Companies) import.
@@ -97,6 +99,20 @@ class BaseSource(ABC):
         """
         return set()
 
+    def get_pass_through_agents(self, df: pd.DataFrame) -> set:
+        """Get unique pass-through agent names. Override in CyberGrants."""
+        return set()
+
+    @staticmethod
+    def _clean_zip(val) -> str:
+        """Convert ZIP to string, stripping trailing .0 from numeric reads."""
+        if pd.isna(val) or str(val).strip() in ("", "nan"):
+            return ""
+        s = str(val).strip()
+        if s.endswith(".0"):
+            s = s[:-2]
+        return s
+
     def _company_id(self, company_config: dict, company: str) -> str:
         """
         Look up the RE Import ID for a company from the company config.
@@ -120,7 +136,7 @@ class BaseSource(ABC):
             company: Company display name as read from the source file
 
         Returns:
-            Raiser's Edge display name, or raw company name if not configured
+            Raiser's Edge display name, or raw company name as fallback
         """
         re_name = company_config.get(company, {}).get("re_name", "")
         return re_name if re_name else company

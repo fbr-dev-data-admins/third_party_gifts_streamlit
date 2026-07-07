@@ -42,7 +42,8 @@ class FidelitySource(BaseSource):
     def transform_part1(
         self,
         df: pd.DataFrame,
-        company_config: dict
+        company_config: dict,
+        pass_through_agents: dict = None
     ) -> tuple[pd.DataFrame, pd.DataFrame, set, set]:
         """Transform Fidelity data for Part 1 import (Individual donations)."""
         gl_post_date = format_gl_post_date()
@@ -94,6 +95,7 @@ class FidelitySource(BaseSource):
                 "Gift Reference": gift_reference,
                 "Soft Credit Company ID": "",
                 "Soft Credit Entity ID": self.entity_constituent_id,
+                "Soft Credit Entity ID 2": "",
                 "First Name": first_name,
                 "Middle Name": middle_name,
                 "Last Name": last_name,
@@ -117,7 +119,8 @@ class FidelitySource(BaseSource):
         self,
         df: pd.DataFrame,
         company_config: dict,
-        cache_df: pd.DataFrame
+        cache_df: pd.DataFrame,
+        pass_through_agents: dict = None
     ) -> tuple[pd.DataFrame, set]:
         """Transform Fidelity data for Part 2 (Company/Matching Gift donations)."""
         gl_post_date = format_gl_post_date()
@@ -172,6 +175,9 @@ class FidelitySource(BaseSource):
                 gift_reference = "matching gift for Anonymous"
             elif first and last:
                 gift_reference = f"matching gift for {first} {last}"
+            elif not soft_credit_id and (first or last):
+                name = " ".join(p for p in [first, last] if p)
+                gift_reference = f"matching gift for {name}"
             else:
                 gift_reference = self._build_gift_reference(company=self._company_re_name(company_config, company_name))
 
@@ -186,6 +192,7 @@ class FidelitySource(BaseSource):
                 "Gift Reference": gift_reference,
                 "Soft Credit Individual ID": soft_credit_id,
                 "Soft Credit Entity ID": self.entity_constituent_id,
+                "Soft Credit Entity ID 2": "",
             }
 
             company_rows.append(output_row)
