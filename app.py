@@ -909,7 +909,9 @@ def main():
     init_session_state()
 
     load_configs()
-    st.session_state.cache_df = load_cache(st.session_state.use_github)
+    if "cache_loaded" not in st.session_state:
+        st.session_state.cache_df = load_cache(st.session_state.use_github)
+        st.session_state.cache_loaded = True
 
     if st.session_state.re_tokens and st.session_state.re_api:
         st.session_state.re_api.set_tokens(**st.session_state.re_tokens)
