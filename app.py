@@ -672,6 +672,9 @@ def render_part2():
     exact_matches = []
     fuzzy_candidates = []
     matched_cache_indices = set()
+    seen_fuzzy_keys = set()
+
+    for idx, cache_row in unmatched_cache.iterrows():
 
     for idx, cache_row in unmatched_cache.iterrows():
         cache_first = str(cache_row.get("First Name", "")).strip()
@@ -738,6 +741,11 @@ def render_part2():
                 cache_date == result_date and
                 cache_amount == result_amount):
 
+                fuzzy_key = (idx, str(result.get("Constituent ID", "")))
+                if fuzzy_key in seen_fuzzy_keys:
+                    continue
+                seen_fuzzy_keys.add(fuzzy_key)
+
                 fuzzy_candidates.append({
                     "cache_idx": idx,
                     "cache_row": cache_row,
@@ -746,13 +754,21 @@ def render_part2():
 
         _ = found_exact
 
+    fuzzy_candidates = [
+        c for c in fuzzy_candidates if c["cache_idx"] not in matched_cache_indices
+    ]
+    fuzzy_cache_indices = {c["cache_idx"] for c in fuzzy_candidates}
+
     today_str = date.today().strftime("%m/%d/%Y")
     if not unmatched_cache.empty and "Date Added to Cache" in unmatched_cache.columns:
         todays_unmatched = unmatched_cache[unmatched_cache["Date Added to Cache"] == today_str]
     else:
         todays_unmatched = pd.DataFrame()
 
-    still_unmatched = todays_unmatched[~todays_unmatched.index.isin(matched_cache_indices)]
+    still_unmatched = todays_unmatched[
+        ~todays_unmatched.index.isin(matched_cache_indices)
+        & ~todays_unmatched.index.isin(fuzzy_cache_indices)
+    ]
 
     if not exact_matches and not fuzzy_candidates and still_unmatched.empty:
         st.info("No cache entries to match from query results")
