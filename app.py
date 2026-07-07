@@ -375,6 +375,10 @@ def check_missing_pass_through_agents() -> dict[str, str]:
         file_info = st.session_state.uploaded_files[file_hash]
         source_class = SOURCE_REGISTRY[source_name]
         source = source_class()
+
+        if not hasattr(source, "get_pass_through_agents"):
+            continue
+
         df = source.read_file(file_info["content"])
         agents = source.get_pass_through_agents(df)
 
