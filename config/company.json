@@ -1022,5 +1022,73 @@
   "BROADCOM": {
     "id": "21-8893",
     "re_name": "Broadcom"
+  },
+  "Standard Insurance Company": {
+    "id": "146783",
+    "re_name": "Standard Insurance Company"
+  },
+  "Voya Financial": {
+    "id": "20-180384",
+    "re_name": "Voya Financial"
+  },
+  "Intuitive Foundation": {
+    "id": "24-922",
+    "re_name": "Intuitive Foundation"
+  },
+  "Dolby": {
+    "id": "24-3505",
+    "re_name": "Dolby"
+  },
+  "Guardant Health": {
+    "id": "26-45096",
+    "re_name": "Guardant Health"
+  },
+  "Kilpatrick Townsend & Stockton LLP": {
+    "id": "25-19369",
+    "re_name": "Kilpatrick Townsend & Stockton LLP"
+  },
+  "The Illumina Foundation": {
+    "id": "26-43259",
+    "re_name": "The Illumina Foundation"
+  },
+  "J.M Smucker": {
+    "id": "21-6803",
+    "re_name": "The JM Smucker Co."
+  },
+  "The Aerospace Corporation": {
+    "id": "23-11553",
+    "re_name": "Aerospace Corporation"
+  },
+  "Whole Foods": {
+    "id": "22-19171",
+    "re_name": "Whole Foods"
+  },
+  "Hyland Software": {
+    "id": "24-900",
+    "re_name": "Hyland Software"
+  },
+  "Cooley": {
+    "id": "41886",
+    "re_name": "Cooley LLP"
+  },
+  "Toast, Inc. - API": {
+    "id": "79950",
+    "re_name": "Toast, Inc."
+  },
+  "Relativity": {
+    "id": "26-45097",
+    "re_name": "Relativity"
+  },
+  "Kaiser Permanente - Enterprise": {
+    "id": "2053",
+    "re_name": "Kaiser Permanente"
+  },
+  "RTX": {
+    "id": "20-173290",
+    "re_name": "RTX Corporation"
+  },
+  "AbbVie Inc.": {
+    "id": "117763",
+    "re_name": "AbbVie Inc."
   }
 }
