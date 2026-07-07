@@ -73,7 +73,7 @@ class BenevitySource(BaseSource):
             if comment:
                 gift_ref_parts.append(comment)
 
-            if reason and reason not in ["User Donation", "User Portfolio Donation", "Anonymous Donation", "Match", ""]:
+            if reason and reason not in ["User Donation", "User Portfolio Donation", "Anonymous Donation", "Match", "Corporate Donation", ""]:
                 gift_ref_parts.append(reason)
 
             gift_reference = self._build_gift_reference(*gift_ref_parts, company=self._company_re_name(company_config, company))
@@ -127,7 +127,7 @@ class BenevitySource(BaseSource):
             if amount >= 1000:
                 benevity_amount_rows.add(row_idx)
 
-            if reason and reason not in ["User Donation", ""]:
+            if reason and reason not in ["User Donation", "User Portfolio Donation", "Anonymous Donation", "Match", "Corporate Donation", ""]:
                 benevity_reason_rows.add(row_idx)
 
             unified_rows.append(output_row)
