@@ -1018,5 +1018,9 @@
   "BBGF  (GC Only)": {
     "id": "21-6839",
     "re_name": "Blackbaud"
+  },
+  "BROADCOM": {
+    "id": "21-8893",
+    "re_name": "Broadcom"
   }
 }
