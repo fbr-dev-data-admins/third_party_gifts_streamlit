@@ -59,6 +59,7 @@ def create_import_excel(
     first_name_col_idx = columns.index("First Name") + 1 if "First Name" in columns else None
     last_name_col_idx = columns.index("Last Name") + 1 if "Last Name" in columns else None
     constituent_id_col_idx = columns.index("Constituent ID") + 1 if "Constituent ID" in columns else None
+    soft_credit_id_col_idx = columns.index("Soft Credit Individual ID") + 1 if "Soft Credit Individual ID" in columns else None
 
     if zip_col_idx:
         for row_idx in range(2, len(df) + 2):
@@ -115,6 +116,12 @@ def create_import_excel(
             last_name_has_space = pd.notna(last_name) and " " in str(last_name)
             if last_name_has_space or (is_non_anonymous and last_name_blank):
                 ws.cell(row=excel_row, column=last_name_col_idx).fill = PALE_YELLOW_FILL
+
+    if soft_credit_id_col_idx:
+        for row_idx in range(len(df)):
+            value = df.iloc[row_idx]["Soft Credit Individual ID"]
+            if str(value).strip() == "nan":
+                ws.cell(row=row_idx + 2, column=soft_credit_id_col_idx).fill = PALE_YELLOW_FILL
 
     for col_idx, column in enumerate(columns, 1):
         max_length = len(str(column))
