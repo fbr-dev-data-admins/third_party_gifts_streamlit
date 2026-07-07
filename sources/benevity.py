@@ -89,6 +89,9 @@ class BenevitySource(BaseSource):
             except (ValueError, TypeError):
                 amount = 0
 
+            if amount == 0:
+                continue
+
             output_row = {
                 "RE Constituent ID": "22-2934" if is_anonymous else "",
                 "Gift Date": gift_date,
