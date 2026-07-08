@@ -53,10 +53,18 @@ class BenevitySource(BaseSource):
 
         for idx, row in df.iterrows():
             reason = str(row.get("Reason", "")) if pd.notna(row.get("Reason")) else ""
+            comment = str(row.get("Comment", "")) if pd.notna(row.get("Comment")) and str(row.get("Comment")).strip() else ""
 
-            if "grant" in reason.lower():
+            if "grant" in comment.lower() or "grant" in reason.lower():
                 grants_rows.append(row)
                 continue
+            
+            gift_ref_parts = []
+            if comment:
+                gift_ref_parts.append(comment)
+            
+            if reason and reason not in ["User Donation", "User Portfolio Donation", "Anonymous Donation", "Match", "Corporate Donation", ""]:
+                gift_ref_parts.append(reason)
 
             is_anonymous = False
             first_name = row.get("Donor First Name", "")
