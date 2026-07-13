@@ -1090,5 +1090,9 @@
   "AbbVie Inc.": {
     "id": "117763",
     "re_name": "AbbVie Inc."
+  },
+  "JOHNSON & JOHNSON": {
+    "id": "97740",
+    "re_name": "Johnson & Johnson"
   }
 }
