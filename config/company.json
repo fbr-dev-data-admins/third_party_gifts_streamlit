@@ -1094,5 +1094,9 @@
   "JOHNSON & JOHNSON": {
     "id": "97740",
     "re_name": "Johnson & Johnson"
+  },
+  "EDWARD JONES": {
+    "id": "24-5387",
+    "re_name": "Edward Jones"
   }
 }
