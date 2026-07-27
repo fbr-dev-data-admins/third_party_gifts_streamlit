@@ -1106,5 +1106,13 @@
   "DENVER BRONCOS": {
     "id": "112829",
     "re_name": "Denver Broncos"
+  },
+  "BackerKit": {
+    "id": "25-19926",
+    "re_name": "BackerKit"
+  },
+  "State Farm": {
+    "id": "20-171249",
+    "re_name": "State Farm"
   }
 }
