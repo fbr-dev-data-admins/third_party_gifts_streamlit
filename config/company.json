@@ -1122,5 +1122,9 @@
   "PULTEGROUP": {
     "id": "150122",
     "re_name": "PulteGroup, Inc"
+  },
+  "Viasat": {
+    "id": "115127",
+    "re_name": "ViaSat"
   }
 }
