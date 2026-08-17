@@ -1130,5 +1130,13 @@
   "Envestnet": {
     "id": "20-180517",
     "re_name": "Envestnet"
+  },
+  "Marathon Petroleum": {
+    "id": "21-9435",
+    "re_name": "Marathon Petroleum"
+  },
+  "JPMORGAN CHASE": {
+    "id": "86148",
+    "re_name": "JP Morgan Chase & Co"
   }
 }
