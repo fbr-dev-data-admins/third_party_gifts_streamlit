@@ -1126,5 +1126,9 @@
   "Viasat": {
     "id": "115127",
     "re_name": "ViaSat"
+  },
+  "Envestnet": {
+    "id": "20-180517",
+    "re_name": "Envestnet"
   }
 }
