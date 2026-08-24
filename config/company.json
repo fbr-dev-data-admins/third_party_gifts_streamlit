@@ -1138,5 +1138,13 @@
   "JPMORGAN CHASE": {
     "id": "86148",
     "re_name": "JP Morgan Chase & Co"
+  },
+  "Chevron": {
+    "id": "85519",
+    "re_name": "Chevron"
+  },
+  "NORTHROP GRUMMAN": {
+    "id": "22-8991",
+    "re_name": "Northrop Grumman"
   }
 }
