@@ -1150,5 +1150,33 @@
   "Farm Credit Services of America": {
     "id": "133310",
     "re_name": "Farm Credit Services of America"
+  },
+  "US Bank": {
+    "id": "21-18524",
+    "re_name": "U.S Bank"
+  },
+  "Indeed": {
+    "id": "25-976",
+    "re_name": "Indeed"
+  },
+  "Moog Inc": {
+    "id": "23-11409",
+    "re_name": "Moog Inc."
+  },
+  "Creation Technologies": {
+    "id": "26-40108",
+    "re_name": "Creation Technologies"
+  },
+  "BNP Paribas": {
+    "id": "20-162394",
+    "re_name": "BNP Paribas"
+  },
+  "Sumitomo Corporation of Americas": {
+    "id": "25-972",
+    "re_name": "Sumitomo Corporation"
+  },
+  "LexisNexis Risk": {
+    "id": "86067",
+    "re_name": "LexisNexis Cares"
   }
 }
