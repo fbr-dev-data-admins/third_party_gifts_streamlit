@@ -1182,5 +1182,17 @@
   "The Lubrizol Corporation": {
     "id": "26-46231",
     "re_name": "The Lubrizol Corporation"
+  },
+  "Vizient Inc": {
+    "id": "147282",
+    "re_name": "Vizient"
+  },
+  "Suncor  ": {
+    "id": "87520",
+    "re_name": "Suncor"
+  },
+  "OneMain Financial": {
+    "id": "26-46447",
+    "re_name": "OneMain Financial"
   }
 }
