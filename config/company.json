@@ -1194,5 +1194,17 @@
   "OneMain Financial": {
     "id": "26-46447",
     "re_name": "OneMain Financial"
+  },
+  "Marsh": {
+    "id": "129976",
+    "re_name": "Marsh & McLennan Companies"
+  },
+  "Newrez": {
+    "id": "23-11554",
+    "re_name": "NewRez"
+  },
+  "GE VERNOVA FOUNDATION": {
+    "id": "81286",
+    "re_name": "GE Vernova Foundation"
   }
 }
