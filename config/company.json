@@ -1206,5 +1206,13 @@
   "GE VERNOVA FOUNDATION": {
     "id": "81286",
     "re_name": "GE Vernova Foundation"
+  },
+  "Crowe": {
+    "id": "25-3171",
+    "re_name": "Crowe LLP"
+  },
+  "TEXAS INSTRUMENTS": {
+    "id": "22-24706",
+    "re_name": "Texas Instruments Foundation"
   }
 }
